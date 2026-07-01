@@ -1,4 +1,4 @@
-"""Optional passive BCone MQTT listener."""
+"""Optional BCone MQTT transport."""
 
 from __future__ import annotations
 
@@ -169,6 +169,44 @@ class BconeMqttListener:
             self._payload_callback(payload)
 
 
+async def async_publish_json(
+    hass: HomeAssistant,
+    *,
+    credentials: BconeMqttCredentials,
+    topic: str,
+    payload: dict[str, Any],
+) -> None:
+    """Publish one JSON command using the local BCone MQTT mTLS credentials."""
+
+    context = await hass.async_add_executor_job(_create_ssl_context, credentials)
+    client_id = _client_id()
+    body = json.dumps(payload, separators=(",", ":")).encode("utf-8")
+    writer: asyncio.StreamWriter | None = None
+    try:
+        reader, writer = await asyncio.open_connection(
+            BCONE_MQTT_ENDPOINT,
+            BCONE_MQTT_PORT,
+            ssl=context,
+            server_hostname=BCONE_MQTT_ENDPOINT,
+        )
+        writer.write(_connect_packet(client_id, keepalive=_KEEPALIVE_SECONDS))
+        await writer.drain()
+        connack = await _read_packet(reader)
+        if len(connack) < 4 or connack[0] != 0x20 or connack[3] != 0:
+            raise BconeMqttError("MQTT CONNACK did not accept the connection")
+
+        writer.write(_publish_packet(topic, body))
+        writer.write(b"\xE0\x00")
+        await writer.drain()
+    finally:
+        if writer is not None:
+            writer.close()
+            try:
+                await writer.wait_closed()
+            except (ConnectionError, ssl.SSLError):
+                pass
+
+
 class BconeMqttError(Exception):
     """Sanitized MQTT listener error."""
 
@@ -210,6 +248,11 @@ def _subscribe_packet(packet_id: int, topics: list[str]) -> bytes:
     payload = b"".join(_utf8(topic) + bytes([0x00]) for topic in topics)
     body = variable_header + payload
     return bytes([0x82]) + _remaining_length(len(body)) + body
+
+
+def _publish_packet(topic: str, payload: bytes) -> bytes:
+    body = _utf8(topic) + payload
+    return bytes([0x30]) + _remaining_length(len(body)) + body
 
 
 def _suback_success(packet: bytes, subscription_count: int) -> bool:

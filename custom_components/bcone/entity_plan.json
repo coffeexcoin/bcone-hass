@@ -554,9 +554,9 @@
     }
   ],
   "notes": [
-    "All entities are read-only for V1.",
+    "State entities are read-only; state-changing controls are implemented as Home Assistant button/select/number platforms.",
     "Raw state/light codes are exposed without friendly labels unless later evidence proves semantics.",
-    "No outbound MQTT publish is required for these entities."
+    "State-changing Home Assistant controls use guarded MQTT publishes when local credential files are present."
   ],
   "source": "captures/private/mqtt-device-state-passive-refresh.json",
   "summary": {
@@ -565,10 +565,8 @@
     "pool_unit_count": 1,
     "source_topic": "bc/<device_id>/ind",
     "unsupported_for_v1": [
-      "control",
-      "configuration_writes",
       "firmware_update_actions"
     ],
-    "v1_scope": "auth-and-readonly-monitoring"
+    "v1_scope": "auth-monitoring-and-guarded-mqtt-controls"
   }
 }

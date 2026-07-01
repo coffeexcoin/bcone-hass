@@ -1,4 +1,4 @@
-"""BCone read-only Home Assistant integration."""
+"""BCone Home Assistant integration."""
 
 from __future__ import annotations
 
@@ -10,20 +10,23 @@ from aiohttp import ClientResponseError
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .api import BconeApiClient, BconeApiError, BconeTokens
 from .const import CONF_DEVICE_ID, CONF_EMAIL, CONF_TOKENS, DOMAIN, PLATFORMS
-from .mqtt import BconeMqttCredentials, BconeMqttListener
+from .control import pool_unit_state_command, sensitivity_command, stop_siren_command
+from .entity_plan import pool_unit_ids
+from .mqtt import BconeMqttCredentials, BconeMqttError, BconeMqttListener, async_publish_json
 from .state import build_state_report, empty_state_report
 
 _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Set up BCone read-only monitoring from a config entry."""
+    """Set up BCone monitoring from a config entry."""
 
     coordinator = BconeReadonlyCoordinator(hass, entry)
     await coordinator.async_config_entry_first_refresh()
@@ -46,7 +49,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 
 class BconeReadonlyCoordinator(DataUpdateCoordinator[dict[str, Any]]):
-    """Poll BCone read-only cloud state."""
+    """Poll BCone cloud state and issue guarded MQTT commands."""
 
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
         super().__init__(
@@ -104,6 +107,51 @@ class BconeReadonlyCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         if self._mqtt_listener is not None:
             await self._mqtt_listener.stop()
             self._mqtt_listener = None
+
+    @property
+    def mqtt_writes_available(self) -> bool:
+        """Return true when local mTLS credentials are available for commands."""
+
+        return self._mqtt_credentials.available
+
+    def can_write_sensitivity(self, pool_unit_id: str) -> bool:
+        """Return true when the inferred sensitivity command can target safely."""
+
+        ids = pool_unit_ids(self.data or {})
+        return self.mqtt_writes_available and ids == [str(pool_unit_id)]
+
+    async def async_set_pool_unit_state(self, pool_unit_id: str, option: str) -> None:
+        """Set one pool unit mode/state over MQTT."""
+
+        command = pool_unit_state_command(str(self.entry.data[CONF_DEVICE_ID]), pool_unit_id, option)
+        await self._async_publish_command(command.topic, command.payload)
+
+    async def async_stop_siren(self) -> None:
+        """Stop the active siren over MQTT."""
+
+        command = stop_siren_command(str(self.entry.data[CONF_DEVICE_ID]))
+        await self._async_publish_command(command.topic, command.payload)
+
+    async def async_set_sensitivity(self, pool_unit_id: str, value: float) -> None:
+        """Set pool-unit sensitivity over MQTT when targeting is unambiguous."""
+
+        if not self.can_write_sensitivity(pool_unit_id):
+            raise HomeAssistantError("Sensitivity writes require exactly one discovered pool unit")
+        command = sensitivity_command(str(self.entry.data[CONF_DEVICE_ID]), value)
+        await self._async_publish_command(command.topic, command.payload)
+
+    async def _async_publish_command(self, topic: str, payload: dict[str, Any]) -> None:
+        if not self._mqtt_credentials.available:
+            raise HomeAssistantError("BCone MQTT credentials are not available")
+        try:
+            await async_publish_json(
+                self.hass,
+                credentials=self._mqtt_credentials,
+                topic=topic,
+                payload=payload,
+            )
+        except (BconeMqttError, OSError, TimeoutError) as exc:
+            raise HomeAssistantError(f"BCone MQTT command failed: {exc.__class__.__name__}") from exc
 
     def _handle_mqtt_status(self, connected: bool, error_type: str | None) -> None:
         self._mqtt_connected = connected

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 DOMAIN = "bcone"
-PLATFORMS = ["binary_sensor", "sensor"]
+PLATFORMS = ["binary_sensor", "button", "number", "select", "sensor"]
 
 CONF_EMAIL = "email"
 CONF_MOBILE_DEVICE_ID = "mobile_device_id"
