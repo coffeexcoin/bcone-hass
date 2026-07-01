@@ -103,7 +103,12 @@ class BconeSensor(CoordinatorEntity, SensorEntity):
 
     @property
     def device_info(self) -> dict[str, Any]:
-        return device_info_from_report(self.coordinator.data, entry_id=self.entry_id, domain=DOMAIN)
+        return device_info_from_report(
+            self.coordinator.data,
+            entry_id=self.entry_id,
+            domain=DOMAIN,
+            pool_unit_id=self.pool_unit_id,
+        )
 
 
 def _sensor_description(entity: dict[str, Any]) -> BconeSensorDescription:

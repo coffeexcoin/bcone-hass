@@ -113,11 +113,20 @@ def entity_available(report: dict[str, Any], scope: str, source_path: str, pool_
     return value_from_report(report, source_path, pool_unit_id=pool_unit_id) is not None
 
 
-def device_info_from_report(report: dict[str, Any], *, entry_id: str, domain: str) -> dict[str, Any]:
+def device_info_from_report(
+    report: dict[str, Any],
+    *,
+    entry_id: str,
+    domain: str,
+    pool_unit_id: str | None = None,
+) -> dict[str, Any]:
     """Build Home Assistant device metadata from the latest normalized state."""
 
     state = private_state(report)
     device_id = state.get("device_id") if isinstance(state.get("device_id"), str) else entry_id
+    if pool_unit_id is not None:
+        return _pool_unit_device_info(state, domain=domain, hub_device_id=device_id, pool_unit_id=pool_unit_id)
+
     name = state.get("system_name") if isinstance(state.get("system_name"), str) else "BCone"
     info: dict[str, Any] = {
         "identifiers": {(domain, device_id)},
@@ -125,6 +134,32 @@ def device_info_from_report(report: dict[str, Any], *, entry_id: str, domain: st
         "name": name,
     }
     firmware = state.get("firmware_version")
+    if isinstance(firmware, str) and firmware:
+        info["sw_version"] = firmware
+    return info
+
+
+def _pool_unit_device_info(
+    state: dict[str, Any],
+    *,
+    domain: str,
+    hub_device_id: str,
+    pool_unit_id: str,
+) -> dict[str, Any]:
+    units = state.get("pool_units")
+    unit = units.get(pool_unit_id) if isinstance(units, dict) else None
+    unit = unit if isinstance(unit, dict) else {}
+    unit_name = unit.get("name")
+    serial = unit.get("serial")
+    firmware = unit.get("firmware_version")
+    info: dict[str, Any] = {
+        "identifiers": {(domain, f"{hub_device_id}:pool_unit:{pool_unit_id}")},
+        "manufacturer": "Lifebuoy",
+        "name": unit_name if isinstance(unit_name, str) and unit_name else f"BCone Pool Unit {pool_unit_id}",
+        "via_device": (domain, hub_device_id),
+    }
+    if isinstance(serial, str) and serial:
+        info["serial_number"] = serial
     if isinstance(firmware, str) and firmware:
         info["sw_version"] = firmware
     return info
