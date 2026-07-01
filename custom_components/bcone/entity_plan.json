@@ -62,11 +62,11 @@
       "source_path": "state.firmware_version"
     },
     {
-      "category": "primary",
+      "category": "diagnostic",
       "confidence": "decoded-live-indication-payload",
       "device_class": "voltage",
       "entity_key": "hub_battery_raw",
-      "name": "Hub Battery",
+      "name": "Hub Battery Voltage",
       "native_unit_of_measurement": "V",
       "per_pool_unit": false,
       "platform": "sensor",
@@ -318,11 +318,11 @@
       "source_path": "state.pool_units[*].alarms"
     },
     {
-      "category": "primary",
+      "category": "diagnostic",
       "confidence": "decoded-live-indication-payload",
       "device_class": "voltage",
       "entity_key": "pool_unit_battery_raw",
-      "name": "Battery",
+      "name": "Battery Voltage",
       "native_unit_of_measurement": "V",
       "per_pool_unit": true,
       "platform": "sensor",
@@ -607,7 +607,7 @@
   ],
   "notes": [
     "All entities are read-only for V1.",
-    "Raw state/light/battery/temperature codes are exposed without friendly labels unless later evidence proves semantics.",
+    "Raw state/light codes are exposed without friendly labels unless later evidence proves semantics.",
     "No outbound MQTT publish is required for these entities."
   ],
   "source": "captures/private/mqtt-device-state-passive-refresh.json",
