@@ -284,43 +284,6 @@
     {
       "category": "diagnostic",
       "confidence": "passive-mqtt-device-state-report",
-      "entity_key": "passive_only",
-      "name": "Passive Only",
-      "per_pool_unit": false,
-      "platform": "binary_sensor",
-      "read_only": true,
-      "scope": "monitor",
-      "source_field": "safety.passive_only",
-      "source_path": "report.safety.passive_only"
-    },
-    {
-      "category": "diagnostic",
-      "confidence": "passive-mqtt-device-state-report",
-      "device_class": "problem",
-      "entity_key": "publishes_requested",
-      "name": "Publishes Requested",
-      "per_pool_unit": false,
-      "platform": "binary_sensor",
-      "read_only": true,
-      "scope": "monitor",
-      "source_field": "safety.publishes_requested",
-      "source_path": "report.safety.publishes_requested"
-    },
-    {
-      "category": "diagnostic",
-      "confidence": "passive-mqtt-device-state-report",
-      "entity_key": "seeded_startup",
-      "name": "Seeded Startup",
-      "per_pool_unit": false,
-      "platform": "binary_sensor",
-      "read_only": true,
-      "scope": "monitor",
-      "source_field": "seeded_startup",
-      "source_path": "report.seeded_startup"
-    },
-    {
-      "category": "diagnostic",
-      "confidence": "passive-mqtt-device-state-report",
       "entity_key": "subscription_ack_count",
       "name": "Subscription Acks",
       "per_pool_unit": false,
@@ -649,12 +612,9 @@
   ],
   "source": "captures/private/mqtt-device-state-passive-refresh.json",
   "summary": {
-        "entity_count": 51,
+    "entity_count": 48,
     "mqtt_connected": true,
-    "passive_only": true,
     "pool_unit_count": 1,
-    "publishes_requested": false,
-    "seeded_startup": true,
     "source_topic": "bc/<device_id>/ind",
     "unsupported_for_v1": [
       "control",
