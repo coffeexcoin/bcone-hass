@@ -334,7 +334,7 @@ def _pool_unit(item: dict[str, Any]) -> PoolUnitState:
         serial=_as_str(item.get("sn")),
         name=_as_str(item.get("puname")),
         mac=_as_str(item.get("mac")),
-        state=_as_str(item.get("state")),
+        state=_as_pool_unit_state(item.get("state")),
         sensitivity=_as_sensitivity(item.get("sensitivity")),
         alarms=_as_str(item.get("Alarms") or item.get("alarms")),
         battery=_as_voltage(item.get("PUBatt")),
@@ -495,6 +495,17 @@ def _as_sensitivity(value: Any) -> float | None:
     if raw is None:
         return None
     return round((raw - 9) / 2, 1)
+
+
+def _as_pool_unit_state(value: Any) -> str | None:
+    raw = _as_str(value)
+    if raw is None:
+        return None
+    return {
+        "1": "On/Armed",
+        "2": "Off/Disarmed",
+        "3": "Swim Mode",
+    }.get(raw, raw)
 
 
 def _as_bool(value: Any) -> bool | None:

@@ -76,11 +76,13 @@ def test_history_report_decodes_hub_and_pool_unit_state() -> None:
     assert state["schedules"]["dndstop2"] == "00:00"
     assert state["schedules"]["dndstart3"] == "00:00"
     assert state["schedules"]["dndstop3"] == "00:00"
-    assert state["primary_pool_unit_state"] == "2"
+    assert state["primary_pool_unit_state"] == "Off/Disarmed"
     assert state["pool_units"]["1"]["name"] == "Unit A"
+    assert state["pool_units"]["1"]["state"] == "Off/Disarmed"
     assert state["pool_units"]["1"]["sensitivity"] == 5.0
     assert state["pool_units"]["1"]["battery"] == 2.858
     assert state["pool_units"]["1"]["rssi"] == -54
+    assert state["pool_units"]["1"]["temperature"] == 72
     assert "raw" not in state["pool_units"]["1"]
 
 
@@ -93,7 +95,9 @@ def test_live_mqtt_payload_overrides_stale_rest_names() -> None:
                     "data": {
                         "DeviceID": "device-123",
                         "sysname": "BCONE",
-                        "pulist": [{"puid": "0", "puname": "POOL", "PUBatt": "2858", "sensitivity": "19"}],
+                        "pulist": [
+                            {"puid": "0", "puname": "POOL", "PUBatt": "2858", "sensitivity": "19", "state": "2"}
+                        ],
                     },
                 }
             ]
@@ -102,7 +106,7 @@ def test_live_mqtt_payload_overrides_stale_rest_names() -> None:
         mqtt_payloads=(
             {
                 "sysname": "BCone Hub",
-                "pulist": [{"puid": "0", "puname": "Pool", "PUBatt": "2859", "sensitivity": "12"}],
+                "pulist": [{"puid": "0", "puname": "Pool", "PUBatt": "2859", "sensitivity": "12", "state": "3"}],
             },
         ),
         mqtt_connected=True,
@@ -116,5 +120,6 @@ def test_live_mqtt_payload_overrides_stale_rest_names() -> None:
     assert report["mqtt_update_count"] == 1
     assert state["system_name"] == "BCone Hub"
     assert state["pool_units"]["0"]["name"] == "Pool"
+    assert state["pool_units"]["0"]["state"] == "Swim Mode"
     assert state["pool_units"]["0"]["sensitivity"] == 1.5
     assert state["pool_units"]["0"]["battery"] == 2.859

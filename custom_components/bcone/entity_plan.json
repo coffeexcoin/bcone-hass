@@ -117,8 +117,8 @@
     {
       "category": "primary",
       "confidence": "decoded-live-indication-payload",
-      "entity_key": "primary_pool_unit_state_code",
-      "name": "Primary Pool Unit State Code",
+      "entity_key": "primary_pool_unit_state",
+      "name": "Primary Pool Unit State",
       "per_pool_unit": false,
       "platform": "sensor",
       "read_only": true,
@@ -441,8 +441,8 @@
     {
       "category": "primary",
       "confidence": "decoded-live-indication-payload",
-      "entity_key": "pool_unit_state_code",
-      "name": "State Code",
+      "entity_key": "pool_unit_state",
+      "name": "State",
       "per_pool_unit": true,
       "platform": "sensor",
       "read_only": true,
@@ -453,14 +453,17 @@
     {
       "category": "diagnostic",
       "confidence": "decoded-live-indication-payload",
-      "entity_key": "pool_unit_temperature_raw",
-      "name": "Temperature Raw",
+      "device_class": "temperature",
+      "entity_key": "pool_unit_temperature",
+      "name": "Temperature",
+      "native_unit_of_measurement": "°C",
       "per_pool_unit": true,
       "platform": "sensor",
       "read_only": true,
       "scope": "pool_unit",
       "source_field": "temperature",
-      "source_path": "state.pool_units[*].temperature"
+      "source_path": "state.pool_units[*].temperature",
+      "suggested_display_precision": 0
     },
     {
       "category": "diagnostic",

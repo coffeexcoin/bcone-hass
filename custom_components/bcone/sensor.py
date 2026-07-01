@@ -135,6 +135,8 @@ def _sensor_device_class(entity: dict[str, Any]) -> SensorDeviceClass | str | No
         return SensorDeviceClass.SIGNAL_STRENGTH
     if entity.get("device_class") == "timestamp":
         return SensorDeviceClass.TIMESTAMP
+    if entity.get("device_class") == "temperature":
+        return SensorDeviceClass.TEMPERATURE
     if entity.get("device_class") == "voltage":
         return SensorDeviceClass.VOLTAGE
     return entity.get("device_class")
