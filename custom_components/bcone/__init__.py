@@ -118,7 +118,7 @@ class BconeReadonlyCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         """Return true when the inferred sensitivity command can target safely."""
 
         ids = pool_unit_ids(self.data or {})
-        return self.mqtt_writes_available and ids == [str(pool_unit_id)]
+        return self.mqtt_writes_available and str(pool_unit_id) in ids
 
     async def async_set_pool_unit_state(self, pool_unit_id: str, option: str) -> None:
         """Set one pool unit mode/state over MQTT."""
@@ -136,8 +136,8 @@ class BconeReadonlyCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         """Set pool-unit sensitivity over MQTT when targeting is unambiguous."""
 
         if not self.can_write_sensitivity(pool_unit_id):
-            raise HomeAssistantError("Sensitivity writes require exactly one discovered pool unit")
-        command = sensitivity_command(str(self.entry.data[CONF_DEVICE_ID]), value)
+            raise HomeAssistantError("Sensitivity writes require a discovered pool unit")
+        command = sensitivity_command(str(self.entry.data[CONF_DEVICE_ID]), pool_unit_id, value)
         await self._async_publish_command(command.topic, command.payload)
 
     async def _async_publish_command(self, topic: str, payload: dict[str, Any]) -> None:

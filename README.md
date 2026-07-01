@@ -19,7 +19,7 @@ first production milestone is a custom integration with:
 - read-only state from `/api/getDeviceHistory`
 - optional live MQTT state when local mTLS credential files are present
 - decoded hub and pool-unit state entities
-- guarded MQTT controls for pool-unit state, stop siren, and single-unit sensitivity
+- guarded MQTT controls for pool-unit state, stop siren, and pool-unit sensitivity
 - redacted diagnostics
 
 The app also uses AWS IoT MQTT topics including `bc/<device_id>/ind`,

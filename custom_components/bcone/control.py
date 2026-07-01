@@ -44,12 +44,12 @@ def stop_siren_command(device_id: str) -> MqttCommand:
     return MqttCommand(topic=f"bc/{device_id}/req/stopsiren", payload={})
 
 
-def sensitivity_command(device_id: str, value: float) -> MqttCommand:
+def sensitivity_command(device_id: str, pool_unit_id: str, value: float) -> MqttCommand:
     """Build a pool-unit sensitivity command."""
 
     return MqttCommand(
         topic=f"bc/{device_id}/req/pu/sensitivity",
-        payload={"sensitivity": str(encode_sensitivity(value))},
+        payload={"puid": str(pool_unit_id), "sensitivity": str(encode_sensitivity(value))},
     )
 
 

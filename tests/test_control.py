@@ -25,10 +25,10 @@ def test_stop_siren_command_uses_empty_payload() -> None:
 
 
 def test_sensitivity_command_uses_raw_app_scale() -> None:
-    command = sensitivity_command("device-123", 1.5)
+    command = sensitivity_command("device-123", "0", 1.5)
 
     assert command.topic == "bc/device-123/req/pu/sensitivity"
-    assert command.payload == {"sensitivity": "12"}
+    assert command.payload == {"puid": "0", "sensitivity": "12"}
 
 
 def test_encode_sensitivity_allows_half_steps_from_one_to_five() -> None:
