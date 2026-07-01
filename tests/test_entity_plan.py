@@ -45,6 +45,17 @@ def test_battery_problem_entities_are_diagnostic_battery_binary_sensors() -> Non
     assert entities["pool_unit_battery_problem"]["source_path"] == "state.pool_units[*].battery_problem"
 
 
+def test_stale_freshness_diagnostics_are_not_exposed_as_entities() -> None:
+    entities = {entity["entity_key"] for entity in entities_for_platform("sensor")}
+
+    assert "source_payload_at_utc" not in entities
+    assert "source_payload_age_seconds" not in entities
+    assert "rest_history_latest_at_utc" not in entities
+    assert "rest_history_age_seconds" not in entities
+    assert "mqtt_latest_at_utc" not in entities
+    assert "mqtt_payload_age_seconds" not in entities
+
+
 def test_hub_device_info_uses_system_name() -> None:
     report = {
         "final_snapshot": {
