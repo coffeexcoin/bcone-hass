@@ -79,6 +79,19 @@
     {
       "category": "diagnostic",
       "confidence": "decoded-live-indication-payload",
+      "device_class": "battery",
+      "entity_key": "hub_battery_problem",
+      "name": "Hub Battery State",
+      "per_pool_unit": false,
+      "platform": "binary_sensor",
+      "read_only": true,
+      "scope": "hub",
+      "source_field": "hub_battery_problem",
+      "source_path": "state.hub_battery_problem"
+    },
+    {
+      "category": "diagnostic",
+      "confidence": "decoded-live-indication-payload",
       "entity_key": "hub_battery_state",
       "name": "Hub Battery State",
       "per_pool_unit": false,
@@ -331,6 +344,19 @@
       "source_field": "battery",
       "source_path": "state.pool_units[*].battery",
       "suggested_display_precision": 3
+    },
+    {
+      "category": "diagnostic",
+      "confidence": "decoded-live-indication-payload",
+      "device_class": "battery",
+      "entity_key": "pool_unit_battery_problem",
+      "name": "Battery State",
+      "per_pool_unit": true,
+      "platform": "binary_sensor",
+      "read_only": true,
+      "scope": "pool_unit",
+      "source_field": "battery_problem",
+      "source_path": "state.pool_units[*].battery_problem"
     },
     {
       "category": "diagnostic",
@@ -612,7 +638,7 @@
   ],
   "source": "captures/private/mqtt-device-state-passive-refresh.json",
   "summary": {
-    "entity_count": 48,
+    "entity_count": 50,
     "mqtt_connected": true,
     "pool_unit_count": 1,
     "source_topic": "bc/<device_id>/ind",

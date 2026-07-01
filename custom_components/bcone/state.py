@@ -9,6 +9,9 @@ from typing import Any
 
 from .const import BCONE_MQTT_ENDPOINT, BCONE_MQTT_PORT
 
+HUB_BATTERY_HEALTHY_RANGE = (3.5, 4.2)
+POOL_UNIT_BATTERY_HEALTHY_RANGE = (2.7, 3.3)
+
 
 @dataclass(frozen=True, slots=True)
 class PoolUnitState:
@@ -22,6 +25,7 @@ class PoolUnitState:
     sensitivity: float | None = None
     alarms: str | None = None
     battery: float | None = None
+    battery_problem: bool | None = None
     battery_state: str | None = None
     rssi: int | None = None
     temperature: int | None = None
@@ -52,6 +56,7 @@ class BconeStateSnapshot:
     firmware_source: str | None = None
     firmware_status_marker: str | None = None
     hub_battery: float | None = None
+    hub_battery_problem: bool | None = None
     hub_battery_state: str | None = None
     charging_state: str | None = None
     hub_rssi: int | None = None
@@ -88,6 +93,7 @@ class BconeStateSnapshot:
             "firmware_source": self.firmware_source,
             "firmware_status_marker": self.firmware_status_marker,
             "hub_battery": self.hub_battery,
+            "hub_battery_problem": self.hub_battery_problem,
             "hub_battery_state": self.hub_battery_state,
             "charging_state": self.charging_state,
             "hub_rssi": self.hub_rssi,
@@ -138,6 +144,7 @@ class BconeStateStore:
             key = unit.puid or unit.mac or f"index:{index}"
             merged_units[key] = _merge_unit(merged_units.get(key), unit)
         hub_battery = _as_voltage(state.get("hubatt") or state.get("hubattery"))
+        hub_battery_problem = _battery_problem(hub_battery, HUB_BATTERY_HEALTHY_RANGE)
 
         self._snapshot = replace(
             previous,
@@ -157,6 +164,9 @@ class BconeStateStore:
             firmware_source=_as_str(state.get("src")) or previous.firmware_source,
             firmware_status_marker=_as_str(state.get("top3")) or previous.firmware_status_marker,
             hub_battery=hub_battery if hub_battery is not None else previous.hub_battery,
+            hub_battery_problem=hub_battery_problem
+            if hub_battery_problem is not None
+            else previous.hub_battery_problem,
             hub_battery_state=_as_str(state.get("hubattSt") or state.get("hubattState")) or previous.hub_battery_state,
             charging_state=_as_str(state.get("chargingstate") or state.get("chst")) or previous.charging_state,
             hub_rssi=_as_int(state.get("HUrssi")) if _as_int(state.get("HUrssi")) is not None else previous.hub_rssi,
@@ -340,6 +350,7 @@ def _pool_unit_items(state: dict[str, Any], body: dict[str, Any]) -> list[dict[s
 
 
 def _pool_unit(item: dict[str, Any]) -> PoolUnitState:
+    battery = _as_voltage(item.get("PUBatt"))
     return PoolUnitState(
         puid=_as_str(item.get("puid")),
         serial=_as_str(item.get("sn")),
@@ -348,7 +359,8 @@ def _pool_unit(item: dict[str, Any]) -> PoolUnitState:
         state=_as_pool_unit_state(item.get("state")),
         sensitivity=_as_sensitivity(item.get("sensitivity")),
         alarms=_as_str(item.get("Alarms") or item.get("alarms")),
-        battery=_as_voltage(item.get("PUBatt")),
+        battery=battery,
+        battery_problem=_battery_problem(battery, POOL_UNIT_BATTERY_HEALTHY_RANGE),
         battery_state=_as_str(item.get("PUBattState")),
         rssi=_as_int(item.get("PUrssi")),
         temperature=_as_int(item.get("temp")),
@@ -401,6 +413,7 @@ def _merge_unit(previous: PoolUnitState | None, current: PoolUnitState) -> PoolU
         sensitivity=current.sensitivity if current.sensitivity is not None else previous.sensitivity,
         alarms=current.alarms or previous.alarms,
         battery=current.battery if current.battery is not None else previous.battery,
+        battery_problem=current.battery_problem if current.battery_problem is not None else previous.battery_problem,
         battery_state=current.battery_state or previous.battery_state,
         rssi=current.rssi if current.rssi is not None else previous.rssi,
         temperature=current.temperature if current.temperature is not None else previous.temperature,
@@ -564,6 +577,13 @@ def _as_voltage(value: Any) -> float | None:
     if millivolts is None:
         return None
     return round(millivolts / 1000, 3)
+
+
+def _battery_problem(value: float | None, healthy_range: tuple[float, float]) -> bool | None:
+    if value is None:
+        return None
+    minimum, maximum = healthy_range
+    return value < minimum or value > maximum
 
 
 def _as_sensitivity(value: Any) -> float | None:

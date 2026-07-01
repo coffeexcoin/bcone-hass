@@ -74,6 +74,7 @@ def test_history_report_decodes_hub_and_pool_unit_state() -> None:
     assert state["system_name"] == "Pool"
     assert state["alarm_active"] is False
     assert state["hub_battery"] == 4.121
+    assert state["hub_battery_problem"] is False
     assert state["charging_state"] == "dock"
     assert state["hub_clock"] == "20:08"
     assert state["hub_rssi"] == -64
@@ -91,6 +92,7 @@ def test_history_report_decodes_hub_and_pool_unit_state() -> None:
     assert state["pool_units"]["1"]["state"] == "Off/Disarmed"
     assert state["pool_units"]["1"]["sensitivity"] == 5.0
     assert state["pool_units"]["1"]["battery"] == 2.858
+    assert state["pool_units"]["1"]["battery_problem"] is False
     assert state["pool_units"]["1"]["rssi"] == -54
     assert state["pool_units"]["1"]["temperature"] == 72
     assert "raw" not in state["pool_units"]["1"]
@@ -138,3 +140,54 @@ def test_live_mqtt_payload_overrides_stale_rest_names() -> None:
     assert state["pool_units"]["0"]["state"] == "Swim Mode"
     assert state["pool_units"]["0"]["sensitivity"] == 1.5
     assert state["pool_units"]["0"]["battery"] == 2.859
+    assert state["pool_units"]["0"]["battery_problem"] is False
+
+
+def test_report_marks_batteries_problem_outside_healthy_voltage_ranges() -> None:
+    report = build_history_state_report(
+        {
+            "items": [
+                {
+                    "createdAt": "2026-07-01T19:49:35.667Z",
+                    "time": 100,
+                    "data": {
+                        "DeviceID": "device-123",
+                        "hubatt": "3499",
+                        "pulist": [{"puid": "1", "PUBatt": "2699"}],
+                    },
+                }
+            ]
+        },
+        device_id="device-123",
+    )
+
+    state = report["final_snapshot"]["private_entity_state"]
+    assert state["hub_battery"] == 3.499
+    assert state["hub_battery_problem"] is True
+    assert state["pool_units"]["1"]["battery"] == 2.699
+    assert state["pool_units"]["1"]["battery_problem"] is True
+
+
+def test_report_marks_batteries_problem_above_healthy_voltage_ranges() -> None:
+    report = build_history_state_report(
+        {
+            "items": [
+                {
+                    "createdAt": "2026-07-01T19:49:35.667Z",
+                    "time": 100,
+                    "data": {
+                        "DeviceID": "device-123",
+                        "hubatt": "4201",
+                        "pulist": [{"puid": "1", "PUBatt": "3301"}],
+                    },
+                }
+            ]
+        },
+        device_id="device-123",
+    )
+
+    state = report["final_snapshot"]["private_entity_state"]
+    assert state["hub_battery"] == 4.201
+    assert state["hub_battery_problem"] is True
+    assert state["pool_units"]["1"]["battery"] == 3.301
+    assert state["pool_units"]["1"]["battery_problem"] is True

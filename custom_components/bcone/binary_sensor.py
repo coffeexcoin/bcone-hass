@@ -120,6 +120,8 @@ def _entity_category(entity: dict[str, Any]) -> EntityCategory | None:
 
 
 def _binary_device_class(entity: dict[str, Any]) -> BinarySensorDeviceClass | str | None:
+    if entity.get("device_class") == "battery":
+        return BinarySensorDeviceClass.BATTERY
     if entity.get("device_class") == "connectivity":
         return BinarySensorDeviceClass.CONNECTIVITY
     if entity.get("device_class") == "problem":

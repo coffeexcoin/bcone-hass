@@ -31,6 +31,20 @@ def test_battery_state_entities_remain_diagnostic_state_sensors() -> None:
     assert "device_class" not in entities["pool_unit_battery_state"]
 
 
+def test_battery_problem_entities_are_diagnostic_battery_binary_sensors() -> None:
+    entities = {entity["entity_key"]: entity for entity in entities_for_platform("binary_sensor")}
+
+    assert entities["hub_battery_problem"]["category"] == "diagnostic"
+    assert entities["hub_battery_problem"]["device_class"] == "battery"
+    assert entities["hub_battery_problem"]["name"] == "Hub Battery State"
+    assert entities["hub_battery_problem"]["source_path"] == "state.hub_battery_problem"
+
+    assert entities["pool_unit_battery_problem"]["category"] == "diagnostic"
+    assert entities["pool_unit_battery_problem"]["device_class"] == "battery"
+    assert entities["pool_unit_battery_problem"]["name"] == "Battery State"
+    assert entities["pool_unit_battery_problem"]["source_path"] == "state.pool_units[*].battery_problem"
+
+
 def test_hub_device_info_uses_system_name() -> None:
     report = {
         "final_snapshot": {
