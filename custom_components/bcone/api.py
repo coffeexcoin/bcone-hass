@@ -5,6 +5,7 @@ from __future__ import annotations
 import base64
 import hashlib
 import hmac
+import json
 import logging
 import secrets
 from dataclasses import dataclass
@@ -223,7 +224,15 @@ class BconeApiClient:
                     status=resp.status,
                     body=text,
                 )
-            parsed = await resp.json(content_type=None)
+            text = await resp.text()
+            try:
+                parsed = json.loads(text)
+            except json.JSONDecodeError as exc:
+                raise BconeApiError(
+                    f"Cognito {action} returned non-JSON body: {_trim_body(text)}",
+                    phase=phase,
+                    status=resp.status,
+                ) from exc
         if not isinstance(parsed, dict):
             raise BconeApiError("Cognito response was not an object", phase=phase)
         return parsed
