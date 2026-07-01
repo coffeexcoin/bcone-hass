@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import uuid
+import logging
 from typing import Any
 
 from aiohttp import ClientResponseError
@@ -15,6 +16,8 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .api import BconeApiClient, BconeApiError, BconeAuthError, BconeDeviceNotFound
 from .const import CONF_DEVICE_ID, CONF_EMAIL, CONF_MOBILE_DEVICE_ID, CONF_NAME, CONF_TOKENS, DEFAULT_NAME, DOMAIN
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class BconeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -41,14 +44,15 @@ class BconeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             try:
                 tokens = await api.authenticate(email, password)
                 device_id = await api.discover_device_id(email, mobile_device_id, tokens)
-                await api.get_device_history(device_id, tokens, take=1)
             except BconeAuthError:
                 errors["base"] = "invalid_auth"
             except BconeDeviceNotFound:
                 errors["base"] = "no_device"
-            except (BconeApiError, ClientResponseError):
+            except (BconeApiError, ClientResponseError) as exc:
+                _LOGGER.debug("BCone setup failed during API connection/discovery: %s", exc)
                 errors["base"] = "cannot_connect"
-            except Exception:  # noqa: BLE001 - HA config flow maps unknown setup failures.
+            except Exception as exc:  # noqa: BLE001 - HA config flow maps unknown setup failures.
+                _LOGGER.exception("Unexpected BCone setup failure: %s", exc)
                 errors["base"] = "unknown"
             else:
                 await self.async_set_unique_id(device_id)

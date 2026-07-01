@@ -300,7 +300,6 @@ def _app_headers(tokens: BconeTokens) -> dict[str, str]:
     return {
         "Accept": "application/json",
         "App-Version": "2.2.3",
-        "Authorization": f"{tokens.token_type} {tokens.id_token}",
         "Content-Type": "application/json",
         "Os-Version": "Home Assistant",
         "Phone-Type": "Home Assistant",
