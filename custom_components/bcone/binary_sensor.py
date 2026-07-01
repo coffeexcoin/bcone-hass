@@ -25,17 +25,14 @@ class BconeBinarySensorDescription(BinarySensorEntityDescription):
     per_pool_unit: bool = False
 
 
-BINARY_SENSORS: tuple[BconeBinarySensorDescription, ...] = tuple(
-    _binary_sensor_description(entity) for entity in entities_for_platform("binary_sensor")
-)
-
-
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
     """Set up BCone binary sensors."""
 
     coordinator = hass.data[DOMAIN][entry.entry_id]
-    fixed_descriptions = [description for description in BINARY_SENSORS if not description.per_pool_unit]
-    pool_descriptions = [description for description in BINARY_SENSORS if description.per_pool_unit]
+    entities = await hass.async_add_executor_job(entities_for_platform, "binary_sensor")
+    descriptions = tuple(_binary_sensor_description(entity) for entity in entities)
+    fixed_descriptions = [description for description in descriptions if not description.per_pool_unit]
+    pool_descriptions = [description for description in descriptions if description.per_pool_unit]
     known_pool_unit_ids: set[str] = set()
 
     async_add_entities(BconeBinarySensor(coordinator, entry.entry_id, description) for description in fixed_descriptions)
