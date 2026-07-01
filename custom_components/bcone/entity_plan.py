@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import re
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -170,11 +169,7 @@ def _pool_unit_device_name(unit_name: Any, pool_unit_id: str) -> str:
     """Return a device-level name for one floating pool unit."""
 
     if isinstance(unit_name, str) and unit_name.strip():
-        stripped = unit_name.strip()
-        unit_match = re.fullmatch(r"unit\s+(.+)", stripped, flags=re.IGNORECASE)
-        if unit_match:
-            return f"Pool Unit {unit_match.group(1)}"
-        return stripped
+        return unit_name.strip()
     return f"Pool Unit {pool_unit_id}"
 
 
