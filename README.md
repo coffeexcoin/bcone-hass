@@ -20,6 +20,7 @@ first production milestone is a custom integration with:
 - optional live MQTT state when local mTLS credential files are present
 - decoded hub and pool-unit state entities
 - guarded MQTT controls for pool-unit state, stop siren, and pool-unit sensitivity
+- optional Lovelace card served from `/bcone/bcone-card.js`
 - redacted diagnostics
 
 The app also uses AWS IoT MQTT topics including `bc/<device_id>/ind`,
@@ -35,6 +36,35 @@ Optional MQTT credential paths under Home Assistant config:
 
 If any of those files are missing, the integration stays REST-only and the
 `MQTT Connected` entity remains off.
+
+## Lovelace Card
+
+The integration serves a no-build custom card at:
+
+```text
+/bcone/bcone-card.js
+```
+
+Add that URL as a Lovelace JavaScript module resource after installing or
+updating the integration and restarting Home Assistant.
+
+Example card configuration:
+
+```yaml
+type: custom:bcone-pool-card
+name: Pool
+state_entity: select.pool_state
+sensitivity_entity: number.pool_sensitivity
+stop_siren_entity: button.bcone_stop_siren
+temperature_entity: sensor.pool_temperature
+battery_entity: sensor.pool_battery_voltage
+rssi_entity: sensor.pool_rssi
+position_entity: sensor.pool_position
+```
+
+Only `state_entity` is required. The card tries to find related entities from
+the same Home Assistant device when the frontend entity registry is available,
+but explicit entity ids are more predictable.
 
 ## Safety
 

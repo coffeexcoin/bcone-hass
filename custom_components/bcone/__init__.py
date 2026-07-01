@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 from datetime import timedelta
 from typing import Any
 
 from aiohttp import ClientResponseError
 
+from homeassistant.components.http import StaticPathConfig
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
@@ -16,13 +18,21 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .api import BconeApiClient, BconeApiError, BconeTokens
-from .const import CONF_DEVICE_ID, CONF_EMAIL, CONF_TOKENS, DOMAIN, PLATFORMS
+from .const import CARD_URL, CONF_DEVICE_ID, CONF_EMAIL, CONF_TOKENS, DOMAIN, PLATFORMS
 from .control import pool_unit_state_command, sensitivity_command, stop_siren_command
 from .entity_plan import pool_unit_ids
 from .mqtt import BconeMqttCredentials, BconeMqttError, BconeMqttListener, async_publish_json
 from .state import build_state_report, empty_state_report
 
 _LOGGER = logging.getLogger(__name__)
+CARD_PATH = Path(__file__).parent / "www" / "bcone-card.js"
+
+
+async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
+    """Set up BCone integration-wide resources."""
+
+    await hass.http.async_register_static_paths([StaticPathConfig(CARD_URL, str(CARD_PATH), True)])
+    return True
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:

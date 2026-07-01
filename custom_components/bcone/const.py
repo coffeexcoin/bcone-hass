@@ -4,6 +4,7 @@ from __future__ import annotations
 
 DOMAIN = "bcone"
 PLATFORMS = ["binary_sensor", "button", "number", "select", "sensor"]
+CARD_URL = "/bcone/bcone-card.js"
 
 CONF_EMAIL = "email"
 CONF_MOBILE_DEVICE_ID = "mobile_device_id"
