@@ -192,12 +192,12 @@ class BconeStateStore:
             schedules=_merge_non_none(
                 previous.schedules,
                 {
-                    "dndstart": _as_str(state.get("dndstart")),
-                    "dndstop": _as_str(state.get("dndstop")),
-                    "dndstart2": _as_str(state.get("dndstart2")),
-                    "dndstop2": _as_str(state.get("dndstop2")),
-                    "dndstart3": _as_str(state.get("dndstart3")),
-                    "dndstop3": _as_str(state.get("dndstop3")),
+                    "dndstart": _as_dnd_time(state.get("dndstart")),
+                    "dndstop": _as_dnd_time(state.get("dndstop")),
+                    "dndstart2": _as_dnd_time(state.get("dndstart2")),
+                    "dndstop2": _as_dnd_time(state.get("dndstop2")),
+                    "dndstart3": _as_dnd_time(state.get("dndstart3")),
+                    "dndstop3": _as_dnd_time(state.get("dndstop3")),
                     "sirentime": _as_str(state.get("sirentime")),
                     "swmtime": _as_str(state.get("swmtime")),
                 },
@@ -427,6 +427,31 @@ def _as_str(value: Any) -> str | None:
     if value is None:
         return None
     return str(value)
+
+
+def _as_dnd_time(value: Any) -> str | None:
+    if value is None:
+        return None
+    if isinstance(value, str) and ":" in value:
+        parts = value.strip().split(":", maxsplit=1)
+        try:
+            hour = int(parts[0])
+            minute = int(parts[1])
+        except ValueError:
+            return value
+        if 0 <= hour <= 23 and 0 <= minute <= 59:
+            return f"{hour:02d}:{minute:02d}"
+        return value
+
+    minutes = _as_int(value)
+    if minutes is None:
+        return _as_str(value)
+    if minutes == 2000:
+        return "00:00"
+    if 0 <= minutes < 24 * 60:
+        hour, minute = divmod(minutes, 60)
+        return f"{hour:02d}:{minute:02d}"
+    return str(minutes)
 
 
 def _as_bool(value: Any) -> bool | None:

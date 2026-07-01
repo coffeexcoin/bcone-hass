@@ -22,6 +22,12 @@ def test_history_report_decodes_hub_and_pool_unit_state() -> None:
                         "top3": "ind",
                         "time": "1208",
                         "gmtof": "-240",
+                        "dndstart": "1200",
+                        "dndstop": "360",
+                        "dndstart2": "2000",
+                        "dndstop2": "2000",
+                        "dndstart3": "00:00",
+                        "dndstop3": "00:00",
                         "HUrssi": "-64",
                         "WifiRssi": "-58",
                         "pulist": [
@@ -64,6 +70,12 @@ def test_history_report_decodes_hub_and_pool_unit_state() -> None:
     assert state["charging_state"] == "dock"
     assert state["hub_rssi"] == -64
     assert state["wifi_rssi"] == -58
+    assert state["schedules"]["dndstart"] == "20:00"
+    assert state["schedules"]["dndstop"] == "06:00"
+    assert state["schedules"]["dndstart2"] == "00:00"
+    assert state["schedules"]["dndstop2"] == "00:00"
+    assert state["schedules"]["dndstart3"] == "00:00"
+    assert state["schedules"]["dndstop3"] == "00:00"
     assert state["primary_pool_unit_state"] == "2"
     assert state["pool_units"]["1"]["name"] == "Unit A"
     assert state["pool_units"]["1"]["sensitivity"] == 19
