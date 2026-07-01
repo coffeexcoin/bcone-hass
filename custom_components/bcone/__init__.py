@@ -55,8 +55,8 @@ class BconeReadonlyCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     async def _async_update_data(self) -> dict[str, Any]:
         device_id = str(self.entry.data[CONF_DEVICE_ID])
         try:
-            tokens = await self._valid_tokens()
-            history = await self.api.get_device_history(device_id, tokens)
+            await self._valid_tokens()
+            history = await self.api.get_device_history(device_id)
             return build_history_state_report(history, device_id=device_id)
         except (BconeApiError, ClientResponseError) as exc:
             raise UpdateFailed(str(exc)) from exc

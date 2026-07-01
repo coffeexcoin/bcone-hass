@@ -43,8 +43,11 @@ class BconeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             api = BconeApiClient(async_get_clientsession(self.hass))
             try:
                 tokens = await api.authenticate(email, password)
-                device_id = await api.discover_device_id(email, mobile_device_id, tokens)
-            except BconeAuthError:
+                device_id = await api.discover_device_id(email, mobile_device_id)
+            except BconeAuthError as exc:
+                phase = getattr(exc, "phase", "cognito:auth")
+                status = getattr(exc, "status", None)
+                _LOGGER.warning("BCone authentication failed during %s status=%s: %s", phase, status, exc)
                 errors["base"] = "invalid_auth"
             except BconeDeviceNotFound:
                 errors["base"] = "no_device"

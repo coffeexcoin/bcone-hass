@@ -22,17 +22,22 @@ _COGNITO_URL = f"https://cognito-idp.{COGNITO_REGION}.amazonaws.com/"
 _COGNITO_TARGET_PREFIX = "AWSCognitoIdentityProviderService"
 _INFO_BITS = b"Caldera Derived Key"
 _N_HEX = (
-    "FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD1"
-    "29024E088A67CC74020BBEA63B139B22514A08798E3404DD"
-    "EF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245"
-    "E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7ED"
-    "EE386BFB5A899FA5AE9F24117C4B1FE649286651ECE45B3D"
-    "C2007CB8A163BF0598DA48361C55D39A69163FA8FD24CF5F"
-    "83655D23DCA3AD961C62F356208552BB9ED529077096966D"
-    "670C354E4ABC9804F1746C08CA18217C32905E462E36CE3B"
-    "E39E772C180E86039B2783A2EC07A28FB5C55DF06F4C52C9"
-    "DE2BCBF6955817183995497CEA956AE515D2261898FA051015"
-    "728E5A8AACAA68FFFFFFFFFFFFFFFF"
+    "FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E08"
+    "8A67CC74020BBEA63B139B22514A08798E3404DDEF9519B3CD"
+    "3A431B302B0A6DF25F14374FE1356D6D51C245E485B576625E"
+    "7EC6F44C42E9A637ED6B0BFF5CB6F406B7EDEE386BFB5A899F"
+    "A5AE9F24117C4B1FE649286651ECE45B3DC2007CB8A163BF05"
+    "98DA48361C55D39A69163FA8FD24CF5F83655D23DCA3AD961"
+    "C62F356208552BB9ED529077096966D670C354E4ABC9804F174"
+    "6C08CA18217C32905E462E36CE3BE39E772C180E86039B2783"
+    "A2EC07A28FB5C55DF06F4C52C9DE2BCBF6955817183995497C"
+    "EA956AE515D2261898FA051015728E5A8AAAC42DAD33170D04"
+    "507A33A85521ABDF1CBA64ECFB850458DBEF0A8AEA71575D060C"
+    "7DB3970F85A6E1E4C7ABF5AE8CDB0933D71E8C94E04A25619"
+    "DCEE3D2261AD2EE6BF12FFA06D98A0864D87602733EC86A645"
+    "21F2B18177B200CBBE117577A615D6C770988C0BAD946E208E"
+    "24FA074E5AB3143DB5BFCE0FD108E4B82D120A93AD2CAFFFF"
+    "FFFFFFFFFFFF"
 )
 _N = int(_N_HEX, 16)
 _G = 2
@@ -190,22 +195,21 @@ class BconeApiClient:
             raise BconeAuthError("Cognito refresh did not return auth tokens")
         return BconeTokens.from_auth_result(auth_result, refresh_token=tokens.refresh_token)
 
-    async def discover_device_id(self, email: str, mobile_device_id: str, tokens: BconeTokens) -> str:
+    async def discover_device_id(self, email: str, mobile_device_id: str) -> str:
         """Resolve the BCone device ID for this account/mobile identity."""
 
         body = {"email": email, "mobileDeviceId": mobile_device_id}
-        response = await self._bcone_post("getRelevantDeviceId", body, tokens=tokens)
+        response = await self._bcone_post("getRelevantDeviceId", body)
         device_id = response.get("deviceId")
         if not isinstance(device_id, str) or not device_id:
             raise BconeDeviceNotFound("BCone did not return deviceId")
         return device_id
 
-    async def get_device_history(self, device_id: str, tokens: BconeTokens, *, take: int = 5) -> dict[str, Any]:
+    async def get_device_history(self, device_id: str, *, take: int = 5) -> dict[str, Any]:
         """Read recent device history."""
 
         return await self._bcone_get(
             "getDeviceHistory",
-            tokens=tokens,
             params={"deviceId": device_id, "skip": 0, "take": take},
         )
 
@@ -237,12 +241,12 @@ class BconeApiClient:
             raise BconeApiError("Cognito response was not an object", phase=phase)
         return parsed
 
-    async def _bcone_post(self, endpoint: str, body: dict[str, Any], *, tokens: BconeTokens) -> dict[str, Any]:
+    async def _bcone_post(self, endpoint: str, body: dict[str, Any]) -> dict[str, Any]:
         phase = f"bcone:POST:{endpoint}"
         try:
             async with self._session.post(
                 f"{BCONE_API_BASE}/{endpoint}",
-                headers=_app_headers(tokens),
+                headers=_app_headers(),
                 json=body,
             ) as resp:
                 if resp.status >= 400:
@@ -264,14 +268,13 @@ class BconeApiClient:
         self,
         endpoint: str,
         *,
-        tokens: BconeTokens,
         params: dict[str, Any],
     ) -> dict[str, Any]:
         phase = f"bcone:GET:{endpoint}"
         try:
             async with self._session.get(
                 f"{BCONE_API_BASE}/{endpoint}",
-                headers=_app_headers(tokens),
+                headers=_app_headers(),
                 params=params,
             ) as resp:
                 if resp.status >= 400:
@@ -296,7 +299,7 @@ class _SrpClient:
     def __init__(self, *, email: str, password: str) -> None:
         self.email = email
         self.password = password
-        self.small_a = secrets.randbits(256) % _N
+        self.small_a = int.from_bytes(secrets.token_bytes(128), "big") % _N
         self.large_a = pow(_G, self.small_a, _N)
         if self.large_a % _N == 0:
             raise BconeAuthError("Invalid SRP_A")
@@ -305,7 +308,7 @@ class _SrpClient:
     def srp_a(self) -> str:
         """SRP_A parameter as Cognito expects it."""
 
-        return _pad_hex(self.large_a)
+        return f"{self.large_a:x}"
 
     def password_verifier_response(self, challenge: dict[str, Any]) -> dict[str, str]:
         """Build PASSWORD_VERIFIER challenge responses."""
@@ -339,14 +342,10 @@ class _SrpClient:
         }
 
 
-def _app_headers(tokens: BconeTokens) -> dict[str, str]:
+def _app_headers() -> dict[str, str]:
     return {
         "Accept": "application/json",
-        "App-Version": "2.2.3",
         "Content-Type": "application/json",
-        "Os-Version": "Home Assistant",
-        "Phone-Type": "Home Assistant",
-        "User-Agent": "BConeHomeAssistant/0.1",
     }
 
 
