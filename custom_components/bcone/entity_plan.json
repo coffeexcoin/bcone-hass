@@ -62,7 +62,7 @@
       "source_path": "state.firmware_version"
     },
     {
-      "category": "diagnostic",
+      "category": "primary",
       "confidence": "decoded-live-indication-payload",
       "device_class": "voltage",
       "entity_key": "hub_battery_raw",
@@ -318,7 +318,7 @@
       "source_path": "state.pool_units[*].alarms"
     },
     {
-      "category": "diagnostic",
+      "category": "primary",
       "confidence": "decoded-live-indication-payload",
       "device_class": "voltage",
       "entity_key": "pool_unit_battery_raw",
@@ -492,7 +492,7 @@
       "source_path": "state.pool_units[*].state"
     },
     {
-      "category": "diagnostic",
+      "category": "primary",
       "confidence": "decoded-live-indication-payload",
       "device_class": "temperature",
       "entity_key": "pool_unit_temperature",
