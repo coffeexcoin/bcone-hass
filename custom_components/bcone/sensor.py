@@ -75,10 +75,11 @@ class BconeSensor(CoordinatorEntity, SensorEntity):
         self.entity_description = description
         self.entry_id = entry_id
         self.pool_unit_id = pool_unit_id
+        self._attr_name = description.name
+        self._attr_has_entity_name = pool_unit_id is not None
         key_parts = [entry_id]
         if pool_unit_id is not None:
             key_parts.append(f"pool_{pool_unit_id}")
-            self._attr_name = f"Pool Unit {pool_unit_id} {description.name}"
         key_parts.append(description.key)
         self._attr_unique_id = "_".join(key_parts)
 
