@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from custom_components.bcone.state import build_history_state_report
+from custom_components.bcone.state import build_history_state_report, build_state_report
 
 
 def test_history_report_decodes_hub_and_pool_unit_state() -> None:
@@ -82,3 +82,38 @@ def test_history_report_decodes_hub_and_pool_unit_state() -> None:
     assert state["pool_units"]["1"]["battery"] == 2.858
     assert state["pool_units"]["1"]["rssi"] == -54
     assert "raw" not in state["pool_units"]["1"]
+
+
+def test_live_mqtt_payload_overrides_stale_rest_names() -> None:
+    report = build_state_report(
+        {
+            "items": [
+                {
+                    "time": 100,
+                    "data": {
+                        "DeviceID": "device-123",
+                        "sysname": "BCONE",
+                        "pulist": [{"puid": "0", "puname": "POOL", "PUBatt": "2858"}],
+                    },
+                }
+            ]
+        },
+        device_id="device-123",
+        mqtt_payloads=(
+            {
+                "sysname": "BCone Hub",
+                "pulist": [{"puid": "0", "puname": "Pool", "PUBatt": "2859"}],
+            },
+        ),
+        mqtt_connected=True,
+        mqtt_credentials_present=True,
+    )
+
+    state = report["final_snapshot"]["private_entity_state"]
+    assert report["source"] == "rest_history+live_mqtt"
+    assert report["mqtt_connected"] is True
+    assert report["mqtt_credentials_present"] is True
+    assert report["mqtt_update_count"] == 1
+    assert state["system_name"] == "BCone Hub"
+    assert state["pool_units"]["0"]["name"] == "Pool"
+    assert state["pool_units"]["0"]["battery"] == 2.859

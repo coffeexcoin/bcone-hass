@@ -33,9 +33,11 @@ def build_diagnostics(report: dict[str, Any], *, entity_plan: dict[str, Any] | N
             "source": report.get("source"),
             "cloud_connected": bool(report.get("cloud_connected")),
             "mqtt_connected": bool(report.get("mqtt_connected")),
+            "mqtt_credentials_present": bool(report.get("mqtt_credentials_present")),
             "mqtt_endpoint": report.get("mqtt_endpoint"),
             "mqtt_port": report.get("mqtt_port"),
             "mqtt_topics": _redact_topics(_strings(report.get("mqtt_topics"))),
+            "mqtt_error_type": report.get("mqtt_error_type"),
             "error_type": report.get("error_type"),
             "failed_phase": report.get("failed_phase"),
         },
@@ -47,6 +49,7 @@ def build_diagnostics(report: dict[str, Any], *, entity_plan: dict[str, Any] | N
         "runtime": {
             "generated_at_utc": report.get("generated_at_utc"),
             "history_item_count": int(report.get("history_item_count") or 0),
+            "mqtt_update_count": int(report.get("mqtt_update_count") or 0),
             "update_count": len(report.get("updates") or []),
         },
         "state_surface": {
@@ -95,8 +98,10 @@ def _limitations(report: dict[str, Any]) -> list[str]:
         limitations.append("latest refresh had no device-history state items")
     if report.get("error_type"):
         limitations.append("latest refresh failed before a complete read-only state report")
-    if not report.get("mqtt_connected"):
-        limitations.append("live MQTT auth/subscribe is not implemented in this release; REST history is the read-only source")
+    if not report.get("mqtt_credentials_present"):
+        limitations.append("optional MQTT credentials are not present; REST history is the read-only source")
+    elif not report.get("mqtt_connected"):
+        limitations.append("optional MQTT credentials are present, but the latest MQTT connection is not active")
     limitations.append("control, configuration writes, and firmware actions are outside V1")
     return limitations
 

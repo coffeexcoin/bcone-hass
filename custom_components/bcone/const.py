@@ -21,3 +21,7 @@ COGNITO_IDENTITY_POOL_ID = "us-east-2:d53c79d6-85af-4b03-8a5d-7bf7907c03f9"
 BCONE_API_BASE = "https://bcone-server.herokuapp.com/api"
 BCONE_MQTT_ENDPOINT = "amlt1z1qj0jvs-ats.iot.us-east-2.amazonaws.com"
 BCONE_MQTT_PORT = 8883
+BCONE_MQTT_AUTH_DIR = "bcone_mqtt_auth"
+BCONE_MQTT_CA_FILE = "AmazonRootCA1.pem"
+BCONE_MQTT_CERT_FILE = "client.crt"
+BCONE_MQTT_KEY_FILE = "private.key"

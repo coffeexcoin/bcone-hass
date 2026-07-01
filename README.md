@@ -17,14 +17,24 @@ first production milestone is a read-only custom integration with:
 - Cognito token storage/refresh; the password is not stored
 - automatic device ID discovery through `/api/getRelevantDeviceId`
 - read-only state from `/api/getDeviceHistory`
+- optional live MQTT state when local mTLS credential files are present
 - decoded hub and pool-unit state entities
 - redacted diagnostics
 - no Home Assistant services and no MQTT publish calls
 
 The app also uses AWS IoT MQTT topics including `bc/<device_id>/ind`,
-`bc/<device_id>/updatefwstat`, and `FW`. Those topics are mapped and exposed in
-diagnostics, but live MQTT auth/subscribe is not part of this first release
-until the credential-derived MQTT authentication path is proven.
+`bc/<device_id>/updatefwstat`, and `FW`. MQTT support is gated on local
+credential files and is strictly passive: it subscribes to live state topics and
+does not publish control/configuration messages.
+
+Optional MQTT credential paths under Home Assistant config:
+
+- `/config/bcone_mqtt_auth/AmazonRootCA1.pem`
+- `/config/bcone_mqtt_auth/client.crt`
+- `/config/bcone_mqtt_auth/private.key`
+
+If any of those files are missing, the integration stays REST-only and the
+`MQTT Connected` entity remains off.
 
 ## Safety
 

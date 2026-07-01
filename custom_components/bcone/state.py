@@ -209,10 +209,26 @@ class BconeStateStore:
 def build_history_state_report(history: dict[str, Any], *, device_id: str) -> dict[str, Any]:
     """Build the coordinator report from a BCone history response."""
 
+    return build_state_report(history, device_id=device_id)
+
+
+def build_state_report(
+    history: dict[str, Any],
+    *,
+    device_id: str,
+    mqtt_payloads: tuple[dict[str, Any], ...] = (),
+    mqtt_connected: bool = False,
+    mqtt_credentials_present: bool = False,
+    mqtt_error_type: str | None = None,
+) -> dict[str, Any]:
+    """Build a coordinator report from REST history plus optional live MQTT state."""
+
     store = BconeStateStore()
     items = history.get("items") if isinstance(history.get("items"), list) else []
     for item in sorted((item for item in items if isinstance(item, dict)), key=_history_sort_key):
         store.apply_payload(item)
+    for payload in mqtt_payloads:
+        store.apply_payload(payload)
 
     entity_state = store.snapshot.as_entity_state()
     final_snapshot = {
@@ -224,18 +240,22 @@ def build_history_state_report(history: dict[str, Any], *, device_id: str) -> di
         ),
         "private_entity_state": entity_state,
     }
+    has_mqtt_payloads = bool(mqtt_payloads)
     return {
-        "source": "rest_history",
+        "source": "rest_history+live_mqtt" if has_mqtt_payloads else "rest_history",
         "generated_at_utc": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
         "device_id": device_id,
         "mqtt_endpoint": BCONE_MQTT_ENDPOINT,
         "mqtt_port": BCONE_MQTT_PORT,
         "mqtt_topics": [f"bc/{device_id}/ind", f"bc/{device_id}/updatefwstat", "FW"],
-        "mqtt_connected": False,
+        "mqtt_connected": mqtt_connected,
+        "mqtt_credentials_present": mqtt_credentials_present,
+        "mqtt_error_type": mqtt_error_type,
         "cloud_connected": True,
         "error_type": None,
         "failed_phase": None,
         "history_item_count": len(items),
+        "mqtt_update_count": len(mqtt_payloads),
         "updates": items,
         "safety": {
             "passive_only": True,
@@ -246,7 +266,14 @@ def build_history_state_report(history: dict[str, Any], *, device_id: str) -> di
     }
 
 
-def empty_state_report(*, device_id: str, error_type: str | None = None) -> dict[str, Any]:
+def empty_state_report(
+    *,
+    device_id: str,
+    error_type: str | None = None,
+    mqtt_connected: bool = False,
+    mqtt_credentials_present: bool = False,
+    mqtt_error_type: str | None = None,
+) -> dict[str, Any]:
     """Build a report when no history state is available."""
 
     return {
@@ -256,11 +283,14 @@ def empty_state_report(*, device_id: str, error_type: str | None = None) -> dict
         "mqtt_endpoint": BCONE_MQTT_ENDPOINT,
         "mqtt_port": BCONE_MQTT_PORT,
         "mqtt_topics": [f"bc/{device_id}/ind", f"bc/{device_id}/updatefwstat", "FW"],
-        "mqtt_connected": False,
+        "mqtt_connected": mqtt_connected,
+        "mqtt_credentials_present": mqtt_credentials_present,
+        "mqtt_error_type": mqtt_error_type,
         "cloud_connected": error_type is None,
         "error_type": error_type,
         "failed_phase": None,
         "history_item_count": 0,
+        "mqtt_update_count": 0,
         "updates": [],
         "safety": {
             "passive_only": True,
