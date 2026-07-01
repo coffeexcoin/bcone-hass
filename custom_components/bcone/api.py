@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
-from aiohttp import ClientError, ClientResponseError, ClientSession
+from aiohttp import ClientError, ClientSession
 
 from .const import BCONE_API_BASE, COGNITO_CLIENT_ID, COGNITO_REGION, COGNITO_USER_POOL_ID
 
@@ -41,9 +41,22 @@ _K = int(hashlib.sha256(bytes.fromhex("00" + _N_HEX + "0" + f"{_G:x}")).hexdiges
 class BconeApiError(Exception):
     """Base BCone API error."""
 
+    def __init__(self, message: str, *, phase: str | None = None, status: int | None = None) -> None:
+        super().__init__(message)
+        self.phase = phase
+        self.status = status
+
 
 class BconeAuthError(BconeApiError):
     """BCone/Cognito authentication failed."""
+
+
+class BconeHttpError(BconeApiError):
+    """BCone/Cognito HTTP response was not successful."""
+
+    def __init__(self, message: str, *, phase: str, status: int, body: str) -> None:
+        super().__init__(message, phase=phase, status=status)
+        self.body = body
 
 
 class BconeDeviceNotFound(BconeApiError):
@@ -135,12 +148,12 @@ class BconeApiClient:
                     "ChallengeResponses": srp.password_verifier_response(challenge),
                 },
             )
-        except ClientResponseError as exc:
+        except BconeHttpError as exc:
             if exc.status in {400, 401, 403}:
                 raise BconeAuthError(str(exc)) from exc
             raise BconeApiError(str(exc)) from exc
         except ClientError as exc:
-            raise BconeApiError(str(exc)) from exc
+            raise BconeApiError(f"Cognito auth request failed: {exc}", phase="cognito:auth") from exc
 
         auth_result = response.get("AuthenticationResult")
         if not isinstance(auth_result, dict):
@@ -164,12 +177,12 @@ class BconeApiClient:
                     "AuthParameters": auth_parameters,
                 },
             )
-        except ClientResponseError as exc:
+        except BconeHttpError as exc:
             if exc.status in {400, 401, 403}:
                 raise BconeAuthError(str(exc)) from exc
             raise BconeApiError(str(exc)) from exc
         except ClientError as exc:
-            raise BconeApiError(str(exc)) from exc
+            raise BconeApiError(f"Cognito refresh request failed: {exc}", phase="cognito:refresh") from exc
 
         auth_result = response.get("AuthenticationResult")
         if not isinstance(auth_result, dict):
@@ -196,6 +209,7 @@ class BconeApiClient:
         )
 
     async def _cognito(self, action: str, payload: dict[str, Any]) -> dict[str, Any]:
+        phase = f"cognito:{action}"
         headers = {
             "Content-Type": "application/x-amz-json-1.1",
             "X-Amz-Target": f"{_COGNITO_TARGET_PREFIX}.{action}",
@@ -203,26 +217,38 @@ class BconeApiClient:
         async with self._session.post(_COGNITO_URL, headers=headers, json=payload) as resp:
             if resp.status >= 400:
                 text = await resp.text()
-                _LOGGER.debug("Cognito %s failed: %s", action, text)
-            resp.raise_for_status()
+                raise BconeHttpError(
+                    f"Cognito {action} returned HTTP {resp.status}: {_trim_body(text)}",
+                    phase=phase,
+                    status=resp.status,
+                    body=text,
+                )
             parsed = await resp.json()
         if not isinstance(parsed, dict):
-            raise BconeApiError("Cognito response was not an object")
+            raise BconeApiError("Cognito response was not an object", phase=phase)
         return parsed
 
     async def _bcone_post(self, endpoint: str, body: dict[str, Any], *, tokens: BconeTokens) -> dict[str, Any]:
-        async with self._session.post(
-            f"{BCONE_API_BASE}/{endpoint}",
-            headers=_app_headers(tokens),
-            json=body,
-        ) as resp:
-            if resp.status >= 400:
-                text = await resp.text()
-                _LOGGER.debug("BCone POST %s failed: %s", endpoint, text)
-            resp.raise_for_status()
-            parsed = await resp.json()
+        phase = f"bcone:POST:{endpoint}"
+        try:
+            async with self._session.post(
+                f"{BCONE_API_BASE}/{endpoint}",
+                headers=_app_headers(tokens),
+                json=body,
+            ) as resp:
+                if resp.status >= 400:
+                    text = await resp.text()
+                    raise BconeHttpError(
+                        f"BCone POST {endpoint} returned HTTP {resp.status}: {_trim_body(text)}",
+                        phase=phase,
+                        status=resp.status,
+                        body=text,
+                    )
+                parsed = await resp.json()
+        except ClientError as exc:
+            raise BconeApiError(f"BCone POST {endpoint} request failed: {exc}", phase=phase) from exc
         if not isinstance(parsed, dict):
-            raise BconeApiError(f"BCone POST {endpoint} response was not an object")
+            raise BconeApiError(f"BCone POST {endpoint} response was not an object", phase=phase)
         return parsed
 
     async def _bcone_get(
@@ -232,18 +258,26 @@ class BconeApiClient:
         tokens: BconeTokens,
         params: dict[str, Any],
     ) -> dict[str, Any]:
-        async with self._session.get(
-            f"{BCONE_API_BASE}/{endpoint}",
-            headers=_app_headers(tokens),
-            params=params,
-        ) as resp:
-            if resp.status >= 400:
-                text = await resp.text()
-                _LOGGER.debug("BCone GET %s failed: %s", endpoint, text)
-            resp.raise_for_status()
-            parsed = await resp.json()
+        phase = f"bcone:GET:{endpoint}"
+        try:
+            async with self._session.get(
+                f"{BCONE_API_BASE}/{endpoint}",
+                headers=_app_headers(tokens),
+                params=params,
+            ) as resp:
+                if resp.status >= 400:
+                    text = await resp.text()
+                    raise BconeHttpError(
+                        f"BCone GET {endpoint} returned HTTP {resp.status}: {_trim_body(text)}",
+                        phase=phase,
+                        status=resp.status,
+                        body=text,
+                    )
+                parsed = await resp.json()
+        except ClientError as exc:
+            raise BconeApiError(f"BCone GET {endpoint} request failed: {exc}", phase=phase) from exc
         if not isinstance(parsed, dict):
-            raise BconeApiError(f"BCone GET {endpoint} response was not an object")
+            raise BconeApiError(f"BCone GET {endpoint} response was not an object", phase=phase)
         return parsed
 
 
@@ -332,3 +366,8 @@ def _pad_hex(value: int) -> str:
 
 def _cognito_timestamp(value: datetime) -> str:
     return f"{value:%a %b} {value.day} {value:%H:%M:%S UTC %Y}"
+
+
+def _trim_body(value: str, *, limit: int = 300) -> str:
+    compact = " ".join(value.split())
+    return compact[:limit]

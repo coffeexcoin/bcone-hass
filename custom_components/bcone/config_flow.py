@@ -39,7 +39,7 @@ class BconeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             email = str(user_input.get(CONF_EMAIL, "")).strip().lower()
             password = str(user_input.get(CONF_PASSWORD, ""))
-            mobile_device_id = uuid.uuid4().hex
+            mobile_device_id = str(uuid.uuid4())
             api = BconeApiClient(async_get_clientsession(self.hass))
             try:
                 tokens = await api.authenticate(email, password)
@@ -49,7 +49,9 @@ class BconeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             except BconeDeviceNotFound:
                 errors["base"] = "no_device"
             except (BconeApiError, ClientResponseError) as exc:
-                _LOGGER.debug("BCone setup failed during API connection/discovery: %s", exc)
+                phase = getattr(exc, "phase", "unknown")
+                status = getattr(exc, "status", None)
+                _LOGGER.warning("BCone setup failed during %s status=%s: %s", phase, status, exc)
                 errors["base"] = "cannot_connect"
             except Exception as exc:  # noqa: BLE001 - HA config flow maps unknown setup failures.
                 _LOGGER.exception("Unexpected BCone setup failure: %s", exc)
