@@ -29,6 +29,8 @@ def test_history_report_decodes_hub_and_pool_unit_state() -> None:
                         "dndstop2": "2000",
                         "dndstart3": "00:00",
                         "dndstop3": "00:00",
+                        "sirentime": "180",
+                        "swmtime": "10",
                         "HUrssi": "-64",
                         "WifiRssi": "-58",
                         "pulist": [
@@ -82,6 +84,8 @@ def test_history_report_decodes_hub_and_pool_unit_state() -> None:
     assert state["schedules"]["dndstop2"] == "00:00"
     assert state["schedules"]["dndstart3"] == "00:00"
     assert state["schedules"]["dndstop3"] == "00:00"
+    assert state["schedules"]["sirentime"] == 180
+    assert state["schedules"]["swmtime"] == 10
     assert state["primary_pool_unit_state"] == "Off/Disarmed"
     assert state["pool_units"]["1"]["name"] == "Unit A"
     assert state["pool_units"]["1"]["state"] == "Off/Disarmed"

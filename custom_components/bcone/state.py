@@ -70,7 +70,7 @@ class BconeStateSnapshot:
     pool_unit_serials: tuple[str, ...] = ()
     pool_unit_firmware_versions: tuple[str, ...] = ()
     pool_unit_diagnostics: tuple[dict[str, int | None], ...] = ()
-    schedules: dict[str, str | None] = field(default_factory=dict)
+    schedules: dict[str, int | str | None] = field(default_factory=dict)
     pool_units: dict[str, PoolUnitState] = field(default_factory=dict)
 
     def as_entity_state(self) -> dict[str, Any]:
@@ -197,8 +197,8 @@ class BconeStateStore:
                     "dndstop2": _as_dnd_time(state.get("dndstop2")),
                     "dndstart3": _as_dnd_time(state.get("dndstart3")),
                     "dndstop3": _as_dnd_time(state.get("dndstop3")),
-                    "sirentime": _as_str(state.get("sirentime")),
-                    "swmtime": _as_str(state.get("swmtime")),
+                    "sirentime": _as_int(state.get("sirentime")),
+                    "swmtime": _as_int(state.get("swmtime")),
                 },
             ),
             pool_units=merged_units,
