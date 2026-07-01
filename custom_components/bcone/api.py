@@ -223,7 +223,7 @@ class BconeApiClient:
                     status=resp.status,
                     body=text,
                 )
-            parsed = await resp.json()
+            parsed = await resp.json(content_type=None)
         if not isinstance(parsed, dict):
             raise BconeApiError("Cognito response was not an object", phase=phase)
         return parsed
