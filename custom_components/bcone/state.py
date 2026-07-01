@@ -161,7 +161,7 @@ class BconeStateStore:
             charging_state=_as_str(state.get("chargingstate") or state.get("chst")) or previous.charging_state,
             hub_rssi=_as_int(state.get("HUrssi")) if _as_int(state.get("HUrssi")) is not None else previous.hub_rssi,
             wifi_rssi=_as_int(state.get("WifiRssi")) if _as_int(state.get("WifiRssi")) is not None else previous.wifi_rssi,
-            hub_clock=_as_str(state.get("time")) or previous.hub_clock,
+            hub_clock=_as_hub_clock(state.get("time")) or previous.hub_clock,
             timezone_offset_minutes=_as_int(state.get("gmtof"))
             if _as_int(state.get("gmtof")) is not None
             else previous.timezone_offset_minutes,
@@ -521,6 +521,22 @@ def _as_str(value: Any) -> str | None:
 
 
 def _as_dnd_time(value: Any) -> str | None:
+    converted = _as_minutes_since_midnight(value)
+    if converted is not None:
+        return converted
+    if _as_int(value) == 2000:
+        return "00:00"
+    return _as_str(value) if value is not None else None
+
+
+def _as_hub_clock(value: Any) -> str | None:
+    converted = _as_minutes_since_midnight(value)
+    if converted is not None:
+        return converted
+    return _as_str(value) if value is not None else None
+
+
+def _as_minutes_since_midnight(value: Any) -> str | None:
     if value is None:
         return None
     if isinstance(value, str) and ":" in value:
@@ -532,17 +548,15 @@ def _as_dnd_time(value: Any) -> str | None:
             return value
         if 0 <= hour <= 23 and 0 <= minute <= 59:
             return f"{hour:02d}:{minute:02d}"
-        return value
+        return None
 
     minutes = _as_int(value)
     if minutes is None:
-        return _as_str(value)
-    if minutes == 2000:
-        return "00:00"
+        return None
     if 0 <= minutes < 24 * 60:
         hour, minute = divmod(minutes, 60)
         return f"{hour:02d}:{minute:02d}"
-    return str(minutes)
+    return None
 
 
 def _as_voltage(value: Any) -> float | None:

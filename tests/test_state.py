@@ -73,6 +73,7 @@ def test_history_report_decodes_hub_and_pool_unit_state() -> None:
     assert state["alarm_active"] is False
     assert state["hub_battery"] == 4.121
     assert state["charging_state"] == "dock"
+    assert state["hub_clock"] == "20:08"
     assert state["hub_rssi"] == -64
     assert state["wifi_rssi"] == -58
     assert state["schedules"]["dndstart"] == "20:00"
