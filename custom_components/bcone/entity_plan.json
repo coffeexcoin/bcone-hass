@@ -231,18 +231,6 @@
     {
       "category": "diagnostic",
       "confidence": "passive-mqtt-device-state-report",
-      "entity_key": "subscription_ack_count",
-      "name": "Subscription Acks",
-      "per_pool_unit": false,
-      "platform": "sensor",
-      "read_only": true,
-      "scope": "monitor",
-      "source_field": "subscription_ack_count",
-      "source_path": "report.subscription_ack_count"
-    },
-    {
-      "category": "diagnostic",
-      "confidence": "passive-mqtt-device-state-report",
       "entity_key": "update_count",
       "name": "Update Count",
       "per_pool_unit": false,
@@ -327,66 +315,6 @@
       "scope": "pool_unit",
       "source_field": "firmware_version",
       "source_path": "state.pool_units[*].firmware_version"
-    },
-    {
-      "category": "diagnostic",
-      "confidence": "decoded-live-indication-payload",
-      "entity_key": "pool_unit_keepalive_failed",
-      "name": "Keepalive Failed",
-      "per_pool_unit": true,
-      "platform": "sensor",
-      "read_only": true,
-      "scope": "pool_unit",
-      "source_field": "keepalive_failed",
-      "source_path": "state.pool_units[*].keepalive_failed"
-    },
-    {
-      "category": "diagnostic",
-      "confidence": "decoded-live-indication-payload",
-      "entity_key": "pool_unit_keepalive_missed",
-      "name": "Keepalive Missed",
-      "per_pool_unit": true,
-      "platform": "sensor",
-      "read_only": true,
-      "scope": "pool_unit",
-      "source_field": "keepalive_missed",
-      "source_path": "state.pool_units[*].keepalive_missed"
-    },
-    {
-      "category": "diagnostic",
-      "confidence": "decoded-live-indication-payload",
-      "entity_key": "pool_unit_keepalive_sent",
-      "name": "Keepalive Sent",
-      "per_pool_unit": true,
-      "platform": "sensor",
-      "read_only": true,
-      "scope": "pool_unit",
-      "source_field": "keepalive_sent",
-      "source_path": "state.pool_units[*].keepalive_sent"
-    },
-    {
-      "category": "diagnostic",
-      "confidence": "decoded-live-indication-payload",
-      "entity_key": "pool_unit_last_keepalive_fail_count",
-      "name": "Last Keepalive Fail Count",
-      "per_pool_unit": true,
-      "platform": "sensor",
-      "read_only": true,
-      "scope": "pool_unit",
-      "source_field": "last_keepalive_fail_count",
-      "source_path": "state.pool_units[*].last_keepalive_fail_count"
-    },
-    {
-      "category": "diagnostic",
-      "confidence": "decoded-live-indication-payload",
-      "entity_key": "pool_unit_last_keepalive_miss_count",
-      "name": "Last Keepalive Miss Count",
-      "per_pool_unit": true,
-      "platform": "sensor",
-      "read_only": true,
-      "scope": "pool_unit",
-      "source_field": "last_keepalive_miss_count",
-      "source_path": "state.pool_units[*].last_keepalive_miss_count"
     },
     {
       "category": "primary",

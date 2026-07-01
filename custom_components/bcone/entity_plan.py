@@ -176,7 +176,6 @@ def _pool_unit_device_name(unit_name: Any, pool_unit_id: str) -> str:
 def _report_value(report: dict[str, Any], path: str) -> Any:
     computed = {
         "seeded_startup": False,
-        "subscription_ack_count": 0,
         "update_count": len(report.get("updates") or []),
     }
     if path in computed:
