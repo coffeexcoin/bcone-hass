@@ -6,6 +6,7 @@ import asyncio
 from collections.abc import Callable
 from dataclasses import dataclass
 import json
+import logging
 from pathlib import Path
 import secrets
 import ssl
@@ -25,6 +26,8 @@ from .const import (
 
 _KEEPALIVE_SECONDS = 60
 _RECONNECT_SECONDS = 30
+
+_LOGGER = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True, slots=True)
@@ -96,6 +99,7 @@ class BconeMqttListener:
             await self._task
         except asyncio.CancelledError:
             pass
+        self._status_callback(False, None)
 
     async def _run_forever(self) -> None:
         while not self._stop_event.is_set():
@@ -104,7 +108,12 @@ class BconeMqttListener:
             except asyncio.CancelledError:
                 raise
             except Exception as exc:  # noqa: BLE001 - listener reports sanitized connection state.
+                _LOGGER.warning("BCone MQTT listener disconnected: %s", exc.__class__.__name__)
                 self._status_callback(False, exc.__class__.__name__)
+            else:
+                if not self._stop_event.is_set():
+                    _LOGGER.warning("BCone MQTT listener disconnected without an exception")
+                    self._status_callback(False, "Disconnected")
 
             if not self._stop_event.is_set():
                 await asyncio.sleep(_RECONNECT_SECONDS)
@@ -133,6 +142,7 @@ class BconeMqttListener:
             if not _suback_success(suback, len(self.topics)):
                 raise BconeMqttError("MQTT SUBACK did not grant all subscriptions")
 
+            _LOGGER.debug("BCone MQTT listener connected")
             self._status_callback(True, None)
             while not self._stop_event.is_set():
                 try:
@@ -148,7 +158,6 @@ class BconeMqttListener:
                 if packet_type == 3:
                     self._handle_publish(packet)
         finally:
-            self._status_callback(False, None)
             if writer is not None:
                 writer.close()
                 try:

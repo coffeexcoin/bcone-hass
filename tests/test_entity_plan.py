@@ -56,6 +56,15 @@ def test_stale_freshness_diagnostics_are_not_exposed_as_entities() -> None:
     assert "mqtt_payload_age_seconds" not in entities
 
 
+def test_mqtt_error_type_is_exposed_as_monitor_diagnostic() -> None:
+    entities = {entity["entity_key"]: entity for entity in entities_for_platform("sensor")}
+
+    assert entities["mqtt_error_type"]["category"] == "diagnostic"
+    assert entities["mqtt_error_type"]["name"] == "MQTT Error Type"
+    assert entities["mqtt_error_type"]["scope"] == "monitor"
+    assert entities["mqtt_error_type"]["source_path"] == "report.mqtt_error_type"
+
+
 def test_hub_device_info_uses_system_name() -> None:
     report = {
         "final_snapshot": {

@@ -219,6 +219,18 @@
     {
       "category": "diagnostic",
       "confidence": "passive-mqtt-device-state-report",
+      "entity_key": "mqtt_error_type",
+      "name": "MQTT Error Type",
+      "per_pool_unit": false,
+      "platform": "sensor",
+      "read_only": true,
+      "scope": "monitor",
+      "source_field": "mqtt_error_type",
+      "source_path": "report.mqtt_error_type"
+    },
+    {
+      "category": "diagnostic",
+      "confidence": "passive-mqtt-device-state-report",
       "entity_key": "subscription_ack_count",
       "name": "Subscription Acks",
       "per_pool_unit": false,
@@ -560,7 +572,7 @@
   ],
   "source": "captures/private/mqtt-device-state-passive-refresh.json",
   "summary": {
-    "entity_count": 44,
+    "entity_count": 45,
     "mqtt_connected": true,
     "pool_unit_count": 1,
     "source_topic": "bc/<device_id>/ind",
