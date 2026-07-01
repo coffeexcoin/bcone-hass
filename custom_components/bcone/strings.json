@@ -1,0 +1,32 @@
+{
+  "title": "BCone",
+  "config": {
+    "step": {
+      "user": {
+        "title": "BCone account",
+        "description": "Sign in once with your BCone account. The integration stores refresh tokens and discovers your device automatically.",
+        "data": {
+          "email": "Email",
+          "password": "Password"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Could not connect to BCone.",
+      "invalid_auth": "BCone rejected the credentials.",
+      "no_device": "Signed in, but BCone did not return a device.",
+      "unknown": "Unexpected error."
+    },
+    "abort": {
+      "already_configured": "This BCone device is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "BCone options",
+        "description": "No options are available for the read-only monitor yet."
+      }
+    }
+  }
+}

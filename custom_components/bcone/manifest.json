@@ -1,0 +1,12 @@
+{
+  "domain": "bcone",
+  "name": "BCone",
+  "codeowners": [],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://github.com/coffeexcoin/bcone-hass",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/coffeexcoin/bcone-hass/issues",
+  "requirements": [],
+  "version": "0.1.0"
+}

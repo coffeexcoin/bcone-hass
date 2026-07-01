@@ -1,0 +1,6 @@
+{
+  "name": "BCone",
+  "render_readme": true,
+  "domains": ["binary_sensor", "sensor"],
+  "homeassistant": "2024.8.0"
+}
