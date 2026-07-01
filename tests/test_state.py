@@ -8,6 +8,7 @@ def test_history_report_decodes_hub_and_pool_unit_state() -> None:
         {
             "items": [
                 {
+                    "createdAt": "2026-07-01T19:49:35.667Z",
                     "time": 100,
                     "data": {
                         "DeviceID": "device-123",
@@ -60,6 +61,10 @@ def test_history_report_decodes_hub_and_pool_unit_state() -> None:
 
     state = report["final_snapshot"]["private_entity_state"]
     assert report["source"] == "rest_history"
+    assert report["source_payload_at_utc"] == "2026-07-01T19:49:35.667000Z"
+    assert report["rest_history_latest_at_utc"] == "2026-07-01T19:49:35.667000Z"
+    assert report["mqtt_latest_at_utc"] is None
+    assert isinstance(report["rest_history_age_seconds"], int)
     assert report["cloud_connected"] is True
     assert report["mqtt_connected"] is False
     assert report["mqtt_topics"] == ["bc/device-123/ind", "bc/device-123/updatefwstat", "FW"]
@@ -91,6 +96,7 @@ def test_live_mqtt_payload_overrides_stale_rest_names() -> None:
         {
             "items": [
                 {
+                    "createdAt": "2026-07-01T19:49:35.667Z",
                     "time": 100,
                     "data": {
                         "DeviceID": "device-123",
@@ -105,6 +111,7 @@ def test_live_mqtt_payload_overrides_stale_rest_names() -> None:
         device_id="device-123",
         mqtt_payloads=(
             {
+                "timestamp": "1782936225000",
                 "sysname": "BCone Hub",
                 "pulist": [{"puid": "0", "puname": "Pool", "PUBatt": "2859", "sensitivity": "12", "state": "3"}],
             },
@@ -115,6 +122,9 @@ def test_live_mqtt_payload_overrides_stale_rest_names() -> None:
 
     state = report["final_snapshot"]["private_entity_state"]
     assert report["source"] == "rest_history+live_mqtt"
+    assert report["rest_history_latest_at_utc"] == "2026-07-01T19:49:35.667000Z"
+    assert report["mqtt_latest_at_utc"] == "2026-07-01T20:03:45Z"
+    assert report["source_payload_at_utc"] == "2026-07-01T20:03:45Z"
     assert report["mqtt_connected"] is True
     assert report["mqtt_credentials_present"] is True
     assert report["mqtt_update_count"] == 1

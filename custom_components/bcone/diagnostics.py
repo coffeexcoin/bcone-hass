@@ -48,6 +48,12 @@ def build_diagnostics(report: dict[str, Any], *, entity_plan: dict[str, Any] | N
         },
         "runtime": {
             "generated_at_utc": report.get("generated_at_utc"),
+            "source_payload_at_utc": report.get("source_payload_at_utc"),
+            "source_payload_age_seconds": report.get("source_payload_age_seconds"),
+            "rest_history_latest_at_utc": report.get("rest_history_latest_at_utc"),
+            "rest_history_age_seconds": report.get("rest_history_age_seconds"),
+            "mqtt_latest_at_utc": report.get("mqtt_latest_at_utc"),
+            "mqtt_payload_age_seconds": report.get("mqtt_payload_age_seconds"),
             "history_item_count": int(report.get("history_item_count") or 0),
             "mqtt_update_count": int(report.get("mqtt_update_count") or 0),
             "update_count": len(report.get("updates") or []),
@@ -98,6 +104,8 @@ def _limitations(report: dict[str, Any]) -> list[str]:
         limitations.append("latest refresh had no device-history state items")
     if report.get("error_type"):
         limitations.append("latest refresh failed before a complete read-only state report")
+    if _age(report.get("rest_history_age_seconds")) is not None and _age(report.get("rest_history_age_seconds")) > 600:
+        limitations.append("REST device history latest item is more than 10 minutes old")
     if not report.get("mqtt_credentials_present"):
         limitations.append("optional MQTT credentials are not present; REST history is the read-only source")
     elif not report.get("mqtt_connected"):
@@ -122,3 +130,11 @@ def _strings(value: Any) -> list[str]:
     if not isinstance(value, list):
         return []
     return sorted(str(item) for item in value)
+
+
+def _age(value: Any) -> int | None:
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, (int, float)):
+        return int(value)
+    return None

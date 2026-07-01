@@ -225,11 +225,16 @@ def build_state_report(
 
     store = BconeStateStore()
     items = history.get("items") if isinstance(history.get("items"), list) else []
-    for item in sorted((item for item in items if isinstance(item, dict)), key=_history_sort_key):
+    history_items = sorted((item for item in items if isinstance(item, dict)), key=_history_sort_key)
+    for item in history_items:
         store.apply_payload(item)
     for payload in mqtt_payloads:
         store.apply_payload(payload)
 
+    generated_at = datetime.now(UTC)
+    rest_history_latest_at = _latest_payload_at(history_items)
+    mqtt_latest_at = _latest_payload_at(mqtt_payloads)
+    source_payload_at = mqtt_latest_at if mqtt_latest_at is not None else rest_history_latest_at
     entity_state = store.snapshot.as_entity_state()
     final_snapshot = {
         "fields_present": _entity_fields_present(entity_state),
@@ -243,7 +248,13 @@ def build_state_report(
     has_mqtt_payloads = bool(mqtt_payloads)
     return {
         "source": "rest_history+live_mqtt" if has_mqtt_payloads else "rest_history",
-        "generated_at_utc": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+        "generated_at_utc": _iso_utc(generated_at),
+        "source_payload_at_utc": _iso_utc(source_payload_at),
+        "source_payload_age_seconds": _age_seconds(generated_at, source_payload_at),
+        "rest_history_latest_at_utc": _iso_utc(rest_history_latest_at),
+        "rest_history_age_seconds": _age_seconds(generated_at, rest_history_latest_at),
+        "mqtt_latest_at_utc": _iso_utc(mqtt_latest_at),
+        "mqtt_payload_age_seconds": _age_seconds(generated_at, mqtt_latest_at),
         "device_id": device_id,
         "mqtt_endpoint": BCONE_MQTT_ENDPOINT,
         "mqtt_port": BCONE_MQTT_PORT,
@@ -254,9 +265,9 @@ def build_state_report(
         "cloud_connected": True,
         "error_type": None,
         "failed_phase": None,
-        "history_item_count": len(items),
+        "history_item_count": len(history_items),
         "mqtt_update_count": len(mqtt_payloads),
-        "updates": items,
+        "updates": history_items,
         "safety": {
             "passive_only": True,
             "publishes_requested": False,
@@ -432,6 +443,57 @@ def _history_sort_key(item: dict[str, Any]) -> tuple[float, str]:
             except ValueError:
                 pass
     return (0, "")
+
+
+def _latest_payload_at(payloads: tuple[dict[str, Any], ...] | list[dict[str, Any]]) -> datetime | None:
+    timestamps = [timestamp for payload in payloads if (timestamp := _payload_at(payload)) is not None]
+    return max(timestamps) if timestamps else None
+
+
+def _payload_at(payload: dict[str, Any]) -> datetime | None:
+    body = _payload_dict(payload)
+    state = body.get("data") if isinstance(body.get("data"), dict) else body
+    for source, key in ((body, "createdAt"), (body, "updatedAt"), (state, "timestamp"), (body, "time")):
+        value = source.get(key)
+        parsed = _as_datetime(value)
+        if parsed is not None:
+            return parsed
+    return None
+
+
+def _as_datetime(value: Any) -> datetime | None:
+    if isinstance(value, datetime):
+        return value.astimezone(UTC) if value.tzinfo is not None else value.replace(tzinfo=UTC)
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        timestamp = float(value)
+        if timestamp > 10_000_000_000:
+            timestamp /= 1000
+        try:
+            return datetime.fromtimestamp(timestamp, UTC)
+        except (OverflowError, OSError, ValueError):
+            return None
+    if isinstance(value, str) and value.strip():
+        text = value.strip()
+        if text.isdigit():
+            return _as_datetime(int(text))
+        try:
+            parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
+        except ValueError:
+            return None
+        return parsed.astimezone(UTC) if parsed.tzinfo is not None else parsed.replace(tzinfo=UTC)
+    return None
+
+
+def _iso_utc(value: datetime | None) -> str | None:
+    if value is None:
+        return None
+    return value.astimezone(UTC).isoformat().replace("+00:00", "Z")
+
+
+def _age_seconds(now: datetime, value: datetime | None) -> int | None:
+    if value is None:
+        return None
+    return max(0, int((now - value).total_seconds()))
 
 
 def _entity_fields_present(entity_state: dict[str, Any]) -> list[str]:
