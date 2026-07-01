@@ -64,8 +64,10 @@
     {
       "category": "diagnostic",
       "confidence": "decoded-live-indication-payload",
+      "device_class": "voltage",
       "entity_key": "hub_battery_raw",
-      "name": "Hub Battery Raw",
+      "name": "Hub Battery",
+      "native_unit_of_measurement": "V",
       "per_pool_unit": false,
       "platform": "sensor",
       "read_only": true,
@@ -276,8 +278,10 @@
     {
       "category": "diagnostic",
       "confidence": "decoded-live-indication-payload",
+      "device_class": "voltage",
       "entity_key": "pool_unit_battery_raw",
-      "name": "Battery Raw",
+      "name": "Battery",
+      "native_unit_of_measurement": "V",
       "per_pool_unit": true,
       "platform": "sensor",
       "read_only": true,

@@ -21,7 +21,7 @@ class PoolUnitState:
     state: str | None = None
     sensitivity: int | None = None
     alarms: str | None = None
-    battery: int | None = None
+    battery: float | None = None
     battery_state: str | None = None
     rssi: int | None = None
     temperature: int | None = None
@@ -51,7 +51,7 @@ class BconeStateSnapshot:
     firmware_version: str | None = None
     firmware_source: str | None = None
     firmware_status_marker: str | None = None
-    hub_battery: int | None = None
+    hub_battery: float | None = None
     hub_battery_state: str | None = None
     charging_state: str | None = None
     hub_rssi: int | None = None
@@ -61,7 +61,7 @@ class BconeStateSnapshot:
     hub_flags: dict[str, str | None] = field(default_factory=dict)
     primary_pool_unit_state: str | None = None
     sensitivities: tuple[int, ...] = ()
-    pool_unit_batteries: tuple[int, ...] = ()
+    pool_unit_batteries: tuple[float, ...] = ()
     pool_unit_battery_states: tuple[str, ...] = ()
     pool_unit_rssi: tuple[int, ...] = ()
     pool_unit_temperatures: tuple[int, ...] = ()
@@ -137,6 +137,7 @@ class BconeStateStore:
         for index, unit in enumerate(pool_units):
             key = unit.puid or unit.mac or f"index:{index}"
             merged_units[key] = _merge_unit(merged_units.get(key), unit)
+        hub_battery = _as_voltage(state.get("hubatt") or state.get("hubattery"))
 
         self._snapshot = replace(
             previous,
@@ -155,9 +156,7 @@ class BconeStateStore:
             firmware_version=_as_str(state.get("v")) or previous.firmware_version,
             firmware_source=_as_str(state.get("src")) or previous.firmware_source,
             firmware_status_marker=_as_str(state.get("top3")) or previous.firmware_status_marker,
-            hub_battery=_as_int(state.get("hubatt") or state.get("hubattery"))
-            if _as_int(state.get("hubatt") or state.get("hubattery")) is not None
-            else previous.hub_battery,
+            hub_battery=hub_battery if hub_battery is not None else previous.hub_battery,
             hub_battery_state=_as_str(state.get("hubattSt") or state.get("hubattState")) or previous.hub_battery_state,
             charging_state=_as_str(state.get("chargingstate") or state.get("chst")) or previous.charging_state,
             hub_rssi=_as_int(state.get("HUrssi")) if _as_int(state.get("HUrssi")) is not None else previous.hub_rssi,
@@ -308,7 +307,7 @@ def _pool_unit(item: dict[str, Any]) -> PoolUnitState:
         state=_as_str(item.get("state")),
         sensitivity=_as_int(item.get("sensitivity")),
         alarms=_as_str(item.get("Alarms") or item.get("alarms")),
-        battery=_as_int(item.get("PUBatt")),
+        battery=_as_voltage(item.get("PUBatt")),
         battery_state=_as_str(item.get("PUBattState")),
         rssi=_as_int(item.get("PUrssi")),
         temperature=_as_int(item.get("temp")),
@@ -452,6 +451,13 @@ def _as_dnd_time(value: Any) -> str | None:
         hour, minute = divmod(minutes, 60)
         return f"{hour:02d}:{minute:02d}"
     return str(minutes)
+
+
+def _as_voltage(value: Any) -> float | None:
+    millivolts = _as_int(value)
+    if millivolts is None:
+        return None
+    return round(millivolts / 1000, 3)
 
 
 def _as_bool(value: Any) -> bool | None:

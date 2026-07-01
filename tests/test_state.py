@@ -14,7 +14,7 @@ def test_history_report_decodes_hub_and_pool_unit_state() -> None:
                         "sn": "hub-serial",
                         "timestamp": "1782864490350",
                         "sysname": "Pool",
-                        "hubatt": "91",
+                        "hubatt": "4121",
                         "chst": "dock",
                         "isUpg": "0",
                         "v": "V3.4.5",
@@ -37,7 +37,7 @@ def test_history_report_decodes_hub_and_pool_unit_state() -> None:
                                 "puname": "Unit A",
                                 "state": "2",
                                 "sensitivity": "19",
-                                "PUBatt": "88",
+                                "PUBatt": "2858",
                                 "PUBattState": "ok",
                                 "PUrssi": "-54",
                                 "temp": "72",
@@ -66,7 +66,7 @@ def test_history_report_decodes_hub_and_pool_unit_state() -> None:
     assert state["device_id"] == "device-123"
     assert state["system_name"] == "Pool"
     assert state["alarm_active"] is False
-    assert state["hub_battery"] == 91
+    assert state["hub_battery"] == 4.121
     assert state["charging_state"] == "dock"
     assert state["hub_rssi"] == -64
     assert state["wifi_rssi"] == -58
@@ -79,6 +79,6 @@ def test_history_report_decodes_hub_and_pool_unit_state() -> None:
     assert state["primary_pool_unit_state"] == "2"
     assert state["pool_units"]["1"]["name"] == "Unit A"
     assert state["pool_units"]["1"]["sensitivity"] == 19
-    assert state["pool_units"]["1"]["battery"] == 88
+    assert state["pool_units"]["1"]["battery"] == 2.858
     assert state["pool_units"]["1"]["rssi"] == -54
     assert "raw" not in state["pool_units"]["1"]
