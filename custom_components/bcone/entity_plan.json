@@ -73,7 +73,8 @@
       "read_only": true,
       "scope": "hub",
       "source_field": "hub_battery",
-      "source_path": "state.hub_battery"
+      "source_path": "state.hub_battery",
+      "suggested_display_precision": 3
     },
     {
       "category": "diagnostic",
@@ -287,7 +288,8 @@
       "read_only": true,
       "scope": "pool_unit",
       "source_field": "battery",
-      "source_path": "state.pool_units[*].battery"
+      "source_path": "state.pool_units[*].battery",
+      "suggested_display_precision": 3
     },
     {
       "category": "diagnostic",
@@ -433,7 +435,8 @@
       "read_only": true,
       "scope": "pool_unit",
       "source_field": "sensitivity",
-      "source_path": "state.pool_units[*].sensitivity"
+      "source_path": "state.pool_units[*].sensitivity",
+      "suggested_display_precision": 1
     },
     {
       "category": "primary",

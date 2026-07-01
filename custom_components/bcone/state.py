@@ -19,7 +19,7 @@ class PoolUnitState:
     name: str | None = None
     mac: str | None = None
     state: str | None = None
-    sensitivity: int | None = None
+    sensitivity: float | None = None
     alarms: str | None = None
     battery: float | None = None
     battery_state: str | None = None
@@ -60,7 +60,7 @@ class BconeStateSnapshot:
     timezone_offset_minutes: int | None = None
     hub_flags: dict[str, str | None] = field(default_factory=dict)
     primary_pool_unit_state: str | None = None
-    sensitivities: tuple[int, ...] = ()
+    sensitivities: tuple[float, ...] = ()
     pool_unit_batteries: tuple[float, ...] = ()
     pool_unit_battery_states: tuple[str, ...] = ()
     pool_unit_rssi: tuple[int, ...] = ()
@@ -335,7 +335,7 @@ def _pool_unit(item: dict[str, Any]) -> PoolUnitState:
         name=_as_str(item.get("puname")),
         mac=_as_str(item.get("mac")),
         state=_as_str(item.get("state")),
-        sensitivity=_as_int(item.get("sensitivity")),
+        sensitivity=_as_sensitivity(item.get("sensitivity")),
         alarms=_as_str(item.get("Alarms") or item.get("alarms")),
         battery=_as_voltage(item.get("PUBatt")),
         battery_state=_as_str(item.get("PUBattState")),
@@ -488,6 +488,13 @@ def _as_voltage(value: Any) -> float | None:
     if millivolts is None:
         return None
     return round(millivolts / 1000, 3)
+
+
+def _as_sensitivity(value: Any) -> float | None:
+    raw = _as_int(value)
+    if raw is None:
+        return None
+    return round((raw - 9) / 2, 1)
 
 
 def _as_bool(value: Any) -> bool | None:

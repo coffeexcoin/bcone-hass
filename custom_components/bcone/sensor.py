@@ -122,6 +122,7 @@ def _sensor_description(entity: dict[str, Any]) -> BconeSensorDescription:
         entity_category=_entity_category(entity),
         device_class=_sensor_device_class(entity),
         native_unit_of_measurement=entity.get("native_unit_of_measurement"),
+        suggested_display_precision=entity.get("suggested_display_precision"),
     )
 
 
