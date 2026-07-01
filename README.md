@@ -20,6 +20,7 @@ first production milestone is a custom integration with:
 - optional live MQTT state when local mTLS credential files are present
 - decoded hub and pool-unit state entities
 - guarded MQTT controls for pool-unit state, stop siren, and pool-unit sensitivity
+- Home Assistant alarm control panel entities for pool-unit security surfaces
 - optional Lovelace card served from `/bcone/bcone-card.js`
 - redacted diagnostics
 
@@ -65,6 +66,20 @@ position_entity: sensor.pool_position
 Only `state_entity` is required. The card tries to find related entities from
 the same Home Assistant device when the frontend entity registry is available,
 but explicit entity ids are more predictable.
+
+HACS installs this repository as an integration, so it does not automatically
+register the card as a Lovelace frontend plugin. Add the resource manually from
+Home Assistant dashboards as a JavaScript module.
+
+## Security
+
+Each discovered pool unit also exposes an `alarm_control_panel` entity so Home
+Assistant can classify it as a security device:
+
+- `armed_away`: BCone `On/Armed`
+- `disarmed`: BCone `Off/Disarmed`
+- `armed_custom_bypass`: BCone `Swim Mode`
+- `triggered`: pool-unit alarm flag is active
 
 ## Safety
 

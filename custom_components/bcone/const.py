@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 DOMAIN = "bcone"
-PLATFORMS = ["binary_sensor", "button", "number", "select", "sensor"]
+PLATFORMS = ["alarm_control_panel", "binary_sensor", "button", "number", "select", "sensor"]
 CARD_URL = "/bcone/bcone-card.js"
 
 CONF_EMAIL = "email"
