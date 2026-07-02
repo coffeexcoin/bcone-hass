@@ -143,6 +143,23 @@ def test_live_mqtt_payload_overrides_stale_rest_names() -> None:
     assert state["pool_units"]["0"]["battery_problem"] is False
 
 
+def test_pool_unit_state_code_7_maps_to_dnd_mode() -> None:
+    report = build_state_report(
+        {"items": []},
+        device_id="device-123",
+        mqtt_payloads=(
+            {
+                "timestamp": "1782936225000",
+                "pulist": [{"puid": "0", "state": "7"}],
+            },
+        ),
+    )
+
+    state = report["final_snapshot"]["private_entity_state"]
+    assert state["primary_pool_unit_state"] == "DND Mode"
+    assert state["pool_units"]["0"]["state"] == "DND Mode"
+
+
 def test_report_marks_batteries_problem_outside_healthy_voltage_ranges() -> None:
     report = build_history_state_report(
         {

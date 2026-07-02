@@ -11,6 +11,12 @@ from .const import BCONE_MQTT_ENDPOINT, BCONE_MQTT_PORT
 
 HUB_BATTERY_HEALTHY_RANGE = (3.5, 4.2)
 POOL_UNIT_BATTERY_HEALTHY_RANGE = (2.7, 3.3)
+POOL_UNIT_STATE_LABELS = {
+    "1": "On/Armed",
+    "2": "Off/Disarmed",
+    "3": "Swim Mode",
+    "7": "DND Mode",
+}
 
 
 @dataclass(frozen=True, slots=True)
@@ -597,11 +603,7 @@ def _as_pool_unit_state(value: Any) -> str | None:
     raw = _as_str(value)
     if raw is None:
         return None
-    return {
-        "1": "On/Armed",
-        "2": "Off/Disarmed",
-        "3": "Swim Mode",
-    }.get(raw, raw)
+    return POOL_UNIT_STATE_LABELS.get(raw, raw)
 
 
 def _as_bool(value: Any) -> bool | None:

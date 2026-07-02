@@ -15,13 +15,13 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
-from .control import POOL_UNIT_STATE_OPTIONS
 from .entity_plan import device_info_from_report, pool_unit_ids, value_from_report
 
 BCONE_TO_ALARM_STATE = {
     "On/Armed": AlarmControlPanelState.ARMED_AWAY,
     "Off/Disarmed": AlarmControlPanelState.DISARMED,
     "Swim Mode": AlarmControlPanelState.ARMED_CUSTOM_BYPASS,
+    "DND Mode": AlarmControlPanelState.DISARMED,
 }
 
 
@@ -72,7 +72,7 @@ class BconePoolUnitAlarmControlPanel(CoordinatorEntity, AlarmControlPanelEntity)
 
     @property
     def available(self) -> bool:
-        return bool(self._pool_unit_mode() in POOL_UNIT_STATE_OPTIONS)
+        return self._pool_unit_mode() is not None
 
     @property
     def device_info(self) -> dict[str, Any]:
@@ -103,7 +103,7 @@ class BconePoolUnitAlarmControlPanel(CoordinatorEntity, AlarmControlPanelEntity)
             "state.pool_units[*].state",
             pool_unit_id=self.pool_unit_id,
         )
-        return value if value in POOL_UNIT_STATE_OPTIONS else None
+        return value if value in BCONE_TO_ALARM_STATE else None
 
 
 def _alarm_active(value: Any) -> bool:
