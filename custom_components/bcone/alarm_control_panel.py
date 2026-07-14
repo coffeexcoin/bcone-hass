@@ -47,6 +47,7 @@ class BconePoolUnitAlarmControlPanel(CoordinatorEntity, AlarmControlPanelEntity)
 
     _attr_name = "Alarm"
     _attr_has_entity_name = True
+    _attr_code_arm_required = False
     _attr_supported_features = (
         AlarmControlPanelEntityFeature.ARM_AWAY | AlarmControlPanelEntityFeature.ARM_CUSTOM_BYPASS
     )
